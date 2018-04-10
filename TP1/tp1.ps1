@@ -30,8 +30,7 @@ El operando "-match" sirve para búscar la ocurrencia de una expresión regular,
 Se podría reemplazar el foreach de la siguiente manera
 
 Param($path)
-$contador = Get-ChildItem $path | Where-Object {$_.FullName -match '[2-9]'} | measure | % {$_.Count}
+$contador = (Get-ChildItem $path -Recurse -File | Where-Object {$_.FullName -match '[0-9]'} | measure).Count
 Write-Output $contador
-
 
 #>
