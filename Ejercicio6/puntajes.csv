@@ -1,0 +1,5 @@
+#TYPE System.Data.DataRow
+"Nombre";"Puntaje"
+"Pepito";"10"
+"Miguel";"7"
+"Jose";"1"
