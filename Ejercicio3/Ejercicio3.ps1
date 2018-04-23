@@ -3,19 +3,30 @@
     C.
 
     .DESCRIPTION
-    Create a Job which check the document, creates a new version with uppercase in every new sentence,
-    and update a log each time the program is closed
+    Crea un Job que cada vez que se cierra el programa editor de texto pasado, evalua el documento y crea una nueva version cambiando las letras a mayusculas en todo inicio de oracion que corresponda, y actualiza un log con los numeros de caracteres cambiados y la fecha.
     
     .PARAMETER documentPath
-    Path to the document which will be updated after close the editor program.
+    Path al documento que debe ser evaluado cuando se cierra el programa editor.
     
     .PARAMETER logPath
-    Path where will be the information about the number of characters changed and the date.
+    Path al documento de log que debe ser actualizado o creado si no existe.
     
     .PARAMETER programName
-    Name of the program which will be used to edit the file.
+    Nombre del programa que se va a utilizar para editar el archivo.
 #>
 
+<#
+    Nombre del Script: Ejercicio3.ps1
+
+    Trabajo Práctico Nro. 1 - Ejercicio 3
+
+    Integrantes:
+                Arana, Juan Pablo        33904497
+                Gonzalez, Mauro Daniel   35368160
+                Sapaya, Nicolás Martín   38319489
+
+    Instancia de Entrega: Entrega
+#>
 
 Param(
     [parameter(Mandatory=$true)]
