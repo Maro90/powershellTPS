@@ -34,92 +34,102 @@ Param(
     [string]$documentPath,
     [parameter(Mandatory=$true)]
     [validateNotNullorEmpty()]
-    [string]$logPath
+    [string]$logPath,
+    [parameter(Mandatory=$true)]
+    [validateNotNullorEmpty()]
+    [string]$program
 )
 
-$texto = (Get-Content $documentPath)
-$shouldChange = $true
-$lineNumber = 0
-$charactersChanged = 0
-
-foreach ($item in $texto) {    
-    $count = $item.length
-
-    if($item -notmatch '.'){
-        #cases with only a break line
-        $newTexto += "`n"
-    } else{
-        if($lineNumber -ne 0){
-            #adding break line after each line, except by the last one
+function checkDocument () {
+    $texto = (Get-Content $documentPath)
+    $shouldChange = $true
+    $lineNumber = 0
+    $charactersChanged = 0
+    
+    foreach ($item in $texto) {    
+        $count = $item.length
+    
+        if($item -notmatch '.'){
+            #cases with only a break line
             $newTexto += "`n"
-        }
-        for($index = 0; $index -lt $count; $index++){
-            $letter = $item[$index]
-            
-            switch -regex ($letter) {
-                #Checking for alphabetic char
-                '[a-zA-Z]' {
-                    if($shouldChange -eq $true){
-
-                        if($letter -cmatch '[a-z]'){
-                            #Here I must make upper case the char, because it is lowercase
-                            $letter = ($letter).ToString().ToUpper()
-                            $charactersChanged++
-                        } 
-                        $shouldChange = $false    
-                    }
-                    break
-                }
-                #Checking for "."
-                '\.'{
-                    $shouldChange = $true
-                    break
-                }
-                #Checking for any character except newline
-                '.'{
-                    break
-                }
-                default{
-                    #unknowned "break line"
-                    Write-Output 'unknowned'
-                }
+        } else{
+            if($lineNumber -ne 0){
+                #adding break line after each line, except by the last one
+                $newTexto += "`n"
             }
-            $newTexto += $letter
+            for($index = 0; $index -lt $count; $index++){
+                $letter = $item[$index]
+                
+                switch -regex ($letter) {
+                    #Checking for alphabetic char
+                    '[a-zA-Z]' {
+                        if($shouldChange -eq $true){
+    
+                            if($letter -cmatch '[a-z]'){
+                                #Here I must make upper case the char, because it is lowercase
+                                $letter = ($letter).ToString().ToUpper()
+                                $charactersChanged++
+                            } 
+                            $shouldChange = $false    
+                        }
+                        break
+                    }
+                    #Checking for "."
+                    '\.'{
+                        $shouldChange = $true
+                        break
+                    }
+                    #Checking for any character except newline
+                    '.'{
+                        break
+                    }
+                    default{
+                        #unknowned "break line"
+                        Write-Output 'unknowned'
+                    }
+                }
+                $newTexto += $letter
+            }
         }
+        $lineNumber++
     }
-    $lineNumber++
+    
+    #Creating updated file
+    $directory = Split-Path -Parent $documentPath
+
+#    $fileName = Split-Path -LeafBase $documentPath
+#    $fileExtension = Split-Path -Extension $documentPath
+    $fileExtension = (dir $documentPath).Extension 
+    $fileName = (dir $documentPath).BaseName
+
+    $newFile = "$fileName"+"_modif$fileExtension"
+    $newFilePath = "$directory/$newFile"
+    Set-Content -path $newFilePath $newTexto
+    
+    #Generating Log
+    $date = Get-Date -UFormat "%A, %d/%m/%Y %H:%M:%S"
+    
+    $log=""
+    $log+="----------------------------------------------------------`n"
+    $log+="FileName:`t`t`t`t$fileName$fileExtension`n"
+    $log+="Updated FileName:`t`t$newFile`n"
+    $log+="Characters Changed:`t`t$charactersChanged`n"
+    $log+="Date:`t`t`t`t`t$date`n"
+    
+    if (Test-Path $logPath){ #Update log
+        Add-Content -path $logPath $log  
+    }else{  #Create Log
+        Set-Content -path $logPath $log
+    }    
 }
 
-#Creating updated file
-$directory = Split-Path -Parent $documentPath
-$fileName = Split-Path -LeafBase $documentPath
-$fileExtension = Split-Path -Extension $documentPath
-$newFile = "$fileName"+"_modif$fileExtension"
-$newFilePath = "$directory/$newFile"
-Set-Content -path $newFilePath $newTexto
+$process = Start-Process $program -FilePath $documentPath -PassThru
 
-#Generating Log
-$date = Get-Date -UFormat "%A, %d/%m/%Y %H:%M:%S"
-
-$log=""
-$log+="----------------------------------------------------------`n"
-$log+="FileName:`t`t`t`t$fileName$fileExtension`n"
-$log+="Updated FileName:`t`t$newFile`n"
-$log+="Characters Changed:`t`t$charactersChanged`n"
-$log+="Date:`t`t`t`t`t$date`n"
-
-if (Test-Path $logPath){ #Update log
-    Add-Content -path $logPath $log  
-}else{  #Create Log
-    Set-Content -path $logPath $log
+$job = Register-ObjectEvent -InputObject $process -EventName exited -Action {
+    Get-EventSubscriber | Unregister-Event
+    checkDocument
 }
 
-
-
-
-
-<#
-$job = Start-Job -ScriptBlock ({
-
-})
-#>
+Start-Job -InputObject $job -ScriptBlock{
+    checkDocument
+}
