@@ -1,0 +1,18 @@
+----------------------------------------------------------
+FileName:				midocumento.txt
+Updated FileName:		midocumento_modif.txt
+Characters Changed:		5
+Date:					Tuesday, 24/04/2018 13:05:38
+
+----------------------------------------------------------
+FileName:				midocumento.txt
+Updated FileName:		midocumento_modif.txt
+Characters Changed:		6
+Date:					Tuesday, 24/04/2018 13:17:39
+
+----------------------------------------------------------
+FileName:				midocumento.txt
+Updated FileName:		midocumento_modif.txt
+Characters Changed:		5
+Date:					Tuesday, 24/04/2018 13:40:08
+
