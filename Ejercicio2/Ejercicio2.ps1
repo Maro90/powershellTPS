@@ -9,7 +9,7 @@
     Path: Direccion donde buscar html (busqueda recursiva)
 
     .EXAMPLE
-    main.ps1 data                                                   
+    Ejercicio2.ps1 data                                                   
     Paginas analizadas: 3
     Resultados obtenidos:
 
