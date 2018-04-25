@@ -1,3 +1,20 @@
+<#
+    .SYNOPSIS
+    Contador de archivos con numero en el path
+
+    .NOTES
+    Nombre del Script: Ejercicio2.ps1
+
+    Trabajo Práctico Nro. 1 - Ejercicio 2
+
+    Integrantes:
+            Arana, Juan Pablo        33904497
+            Gonzalez, Mauro Daniel   35368160
+            Sapaya, Nicolás Martín   38319489
+
+    Instancia de Entrega: Entrega
+#>
+
 Param($path)
 $a = Get-ChildItem $path -File -Recurse
 foreach ($item in $a) {

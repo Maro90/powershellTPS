@@ -1,19 +1,9 @@
 <#
     .SYNOPSIS
-    Nombre del Script: Ejercicio3.ps1
-
-    Trabajo Práctico Nro. 1 - Ejercicio 5
-
-    Integrantes:
-                Arana, Juan Pablo        33904497
-                Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicolás Martín   38319489
-
-    Instancia de Entrega: Entrega
-
+    Analizador de procesos
 
     .DESCRIPTION
-    Abre el documento pasado por parametro con los procesos con los que se va a interactuar
+    Se encarga de analizar los procesos pasado e interactuar de a cuerdo a los parametros pasados.
     Soporta tres parametros exclusivos para interactuar
     
     .PARAMETER filePath
@@ -23,7 +13,29 @@
     Switch exclusivo, si se utiliza se mostrara el PID y los porcentajes de uso de CPU y de la memoria.
     
     .PARAMETER C
-    Switch exclusivo, si se utiliza se mostrara el PID y los porcentajes de uso de CPU y de la memoria.
+    Switch exclusivo, si se utiliza se mostrara el PID y el porcentaje de uso de CPU.
+
+    .PARAMETER C
+    Switch exclusivo, si se utiliza matara los procesos pasados.
+
+
+    .Example
+    .\Ejercicio5.ps1 -filePath .\data\procesos.txt -U
+
+    .Example
+    .\Ejercicio5.ps1 C:\data\procesos.txt -K
+
+    .Notes
+    Nombre del Script: Ejercicio5.ps1
+
+    Trabajo Práctico Nro. 1 - Ejercicio 5
+
+    Integrantes:
+                Arana, Juan Pablo        33904497
+                Gonzalez, Mauro Daniel   35368160
+                Sapaya, Nicolás Martín   38319489
+
+    Instancia de Entrega: Entrega
 
 #>
     
@@ -112,7 +124,7 @@ switch ($PSCmdlet.ParameterSetName) {
             $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
             $memoryUse = $item.proceso.WorkingSet 
 
-            [decima]$realUseCPU = $processorUse / $numberOfProcessors
+            [decimal]$realUseCPU = $processorUse / $numberOfProcessors
             [decimal]$realUseMemory = $memoryUse / $totalMemory
 
             Write-Output "------------------------------------------"

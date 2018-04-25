@@ -18,17 +18,16 @@
     1 hola    2                      
     2 chau    2                      
     3 hola2   1  
-#>    
 
-<#
+    .NOTES
     Nombre del Script: Ejercicio2.ps1
 
     Trabajo Práctico Nro. 1 - Ejercicio 2
 
     Integrantes:
-                Arana, Juan Pablo        33904497
-                Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicolás Martín   38319489
+            Arana, Juan Pablo        33904497
+            Gonzalez, Mauro Daniel   35368160
+            Sapaya, Nicolás Martín   38319489
 
     Instancia de Entrega: Entrega
 #>

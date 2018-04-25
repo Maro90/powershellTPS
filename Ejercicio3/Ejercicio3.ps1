@@ -1,16 +1,6 @@
 <#
     .SYNOPSIS
-    Nombre del Script: Ejercicio3.ps1
-
-    Trabajo Práctico Nro. 1 - Ejercicio 3
-
-    Integrantes:
-                Arana, Juan Pablo        33904497
-                Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicolás Martín   38319489
-
-    Instancia de Entrega: Entrega
-
+    Actualiza las primeras letras de cada oracion a mayusculas
 
     .DESCRIPTION
     Abre el documento pasado por parametro con el editor pasado por parametro, en caso de no existir el documento lo crea.
@@ -34,6 +24,19 @@
     .Example
     .\Ejercicio3.ps1 -documentPath C:\miPrograma\data\cv.txt -logPath C:\miPrograma\data\log.txt -programName notepad.exe
    
+    .Notes
+    Nombre del Script: Ejercicio3.ps1
+
+    Trabajo Práctico Nro. 1 - Ejercicio 3
+
+    Integrantes:
+                Arana, Juan Pablo        33904497
+                Gonzalez, Mauro Daniel   35368160
+                Sapaya, Nicolás Martín   38319489
+
+    Instancia de Entrega: Entrega
+
+
     #>
 
 Param(
