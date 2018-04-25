@@ -3,7 +3,7 @@
     Contador de archivos con numero en el path
 
     .NOTES
-    Nombre del Script: Ejercicio2.ps1
+    Nombre del Script: Ejercicio1.ps1
 
     Trabajo Práctico Nro. 1 - Ejercicio 1
 

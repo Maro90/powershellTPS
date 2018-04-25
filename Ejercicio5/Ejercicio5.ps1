@@ -123,8 +123,17 @@ switch ($PSCmdlet.ParameterSetName) {
             $name = $item.name
             $processId = $item.proceso.ID
 
-            #Se obtiene el porcentaje de tiempo de uso del procesador
-            $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
+            try {
+                #Se obtiene el porcentaje de tiempo de uso del procesador
+                $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" -EV errorGet -EA stop | % { $_.countersamples.cookedvalue }
+            }
+            catch [System.Exception] {
+                #Se capturan los errores en caso de suceder, se informa de ello en el archivo de logs
+                Add-Content -path $logFilePath "No se puede acceder al uso del procesador del proceso de '$name'. Debe ser un problema del idioma de tu maquina"
+                #Se descarta el error capturado y debidamente informado en el archivo de log
+                Write-Output $errorGet | Out-Null
+            }            
+            
             #Se obtiene la cantidad de memoria utizada por el proceso
             $memoryUse = $item.proceso.WorkingSet 
 
@@ -150,9 +159,18 @@ switch ($PSCmdlet.ParameterSetName) {
             $process = $item.proceso.name
             $name = $item.name
             $processId = $item.proceso.ID
-                        
-            #Se obtiene el porcentaje de tiempo de uso del procesador
-            $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
+            
+            try {
+                #Se obtiene el porcentaje de tiempo de uso del procesador
+                $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" -EV errorGet -EA stop | % { $_.countersamples.cookedvalue }
+            }
+            catch [System.Exception] {
+                #Se capturan los errores en caso de suceder, se informa de ello en el archivo de logs
+                Add-Content -path $logFilePath "No se puede acceder al uso del procesador del proceso de '$name'. Debe ser un problema del idioma de tu maquina"
+                #Se descarta el error capturado y debidamente informado en el archivo de log
+                Write-Output $errorGet | Out-Null
+            }
+
             #Se calcula el uso del procesador en base a la cantidad de procesadores
             [decimal]$realUse = $processorUse / $numberOfProcessors
 
