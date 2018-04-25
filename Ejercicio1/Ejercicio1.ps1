@@ -5,7 +5,7 @@
     .NOTES
     Nombre del Script: Ejercicio2.ps1
 
-    Trabajo Práctico Nro. 1 - Ejercicio 2
+    Trabajo Práctico Nro. 1 - Ejercicio 1
 
     Integrantes:
             Arana, Juan Pablo        33904497

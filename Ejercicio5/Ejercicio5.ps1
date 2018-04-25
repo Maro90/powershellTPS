@@ -107,7 +107,9 @@ foreach ($item in $texto) {
     }
 }
 
+#se obtine el numero de procesadores de la computadora
 $numberOfProcessors = (Get-WmiObject -Class Win32_Processor).NumberOfLogicalProcessors
+#se obtiene el total de memoria del sistema
 [decimal]$totalMemory = ((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory/ 1024) #in KB
 
 #se evalua la interaccion a lleva a cabo teniendo en cuenta el segundo parametro de tipo switch asociado a alguno de los grupos
@@ -121,10 +123,14 @@ switch ($PSCmdlet.ParameterSetName) {
             $name = $item.name
             $processId = $item.proceso.ID
 
+            #Se obtiene el porcentaje de tiempo de uso del procesador
             $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
+            #Se obtiene la cantidad de memoria utizada por el proceso
             $memoryUse = $item.proceso.WorkingSet 
 
+            #Se calcula el uso del procesador en base a la cantidad de procesadores
             [decimal]$realUseCPU = $processorUse / $numberOfProcessors
+            #Se calcula el uso de la memoria en base a la cantidad total disponible
             [decimal]$realUseMemory = $memoryUse / $totalMemory
 
             Write-Output "------------------------------------------"
@@ -144,8 +150,10 @@ switch ($PSCmdlet.ParameterSetName) {
             $process = $item.proceso.name
             $name = $item.name
             $processId = $item.proceso.ID
-
+                        
+            #Se obtiene el porcentaje de tiempo de uso del procesador
             $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
+            #Se calcula el uso del procesador en base a la cantidad de procesadores
             [decimal]$realUse = $processorUse / $numberOfProcessors
 
             Write-Output "------------------------------------------"
