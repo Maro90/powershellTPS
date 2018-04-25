@@ -83,17 +83,55 @@ foreach ($item in $texto) {
     }
 }
 
+$numberOfProcessors = (Get-WmiObject -Class Win32_Processor).NumberOfLogicalProcessors
+[decimal]$totalMemory = ((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory/ 1024) #in KB
+
 #se evalua la interaccion a lleva a cabo teniendo en cuenta el segundo parametro de tipo switch asociado a alguno de los grupos
 switch ($PSCmdlet.ParameterSetName) {
     'setU' {
 
         foreach ($item in $procesos) {
             #por cada proceso encontrado se loguea su nombre y ID
-            $item.proceso | Format-List -Property Name,id
+
+            $process = $item.proceso.name
+            $name = $item.name
+            $processId = $item.proceso.ID
+
+            $processorUse = Get-Counter "\process($process)\% processor time" | % { $_.countersamples.cookedvalue }
+            $memoryUse = $item.proceso.WorkingSet 
+
+            [decima]$realUseCPU = $processorUse / $numberOfProcessors
+            [decimal]$realUseMemory = $memoryUse / $totalMemory
+
+            Write-Output "------------------------------------------"
+            Write-Output "Proceso: $name"
+            Write-Output "Pid: $processId"
+            Write-Output "Uso de CPU: $realUseCPU"
+            Write-Output "Uso de Memoria: $realUseMemory"
+            
+            Write-Output "------------------------------------------"
+
         }
     }
     'setC' {
-        Write-Output 'C'
+        foreach ($item in $procesos) {
+            #por cada proceso encontrado se loguea su nombre y ID
+
+            $process = $item.proceso.name
+            $name = $item.name
+            $processId = $item.proceso.ID
+
+            $processorUse = Get-Counter "\process($process)\% processor time" | % { $_.countersamples.cookedvalue }
+            [decimal]$realUse = $processorUse / $numberOfProcessors
+
+            Write-Output "------------------------------------------"
+            Write-Output "Proceso: $name"
+            Write-Output "Pid: $processId"
+            Write-Output "Uso de CPU: $realUse"
+            
+            Write-Output "------------------------------------------"
+
+        }
     }
     'setK'{
         foreach ($item in $procesos) {
