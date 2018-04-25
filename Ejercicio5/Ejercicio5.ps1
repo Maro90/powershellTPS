@@ -75,7 +75,7 @@ foreach ($item in $texto) {
 
     #se agregan los procesos encontrados al array
     if($process){
-        $procesos+=$process
+        $procesos+=([PSCustomObject]@{ name = $item; proceso = $process})
     }else {
         #en caso de que no se haya podido encontrar el proceso se loguea el evento
         Add-Content -path $logFilePath "No se pudo obtener informacion del proceso '$item'."
@@ -89,14 +89,26 @@ switch ($PSCmdlet.ParameterSetName) {
 
         foreach ($item in $procesos) {
             #por cada proceso encontrado se loguea su nombre y ID
-            $item | Format-List -Property Name,id
+            $item.proceso | Format-List -Property Name,id
         }
     }
     'setC' {
         Write-Output 'C'
     }
     'setK'{
-        Write-Output 'K'
+        foreach ($item in $procesos) {
+            #Se mata los procesos que realmente estan corriendo
+            try {
+                Stop-Process $item.proceso -EV errorGet -EA stop
+            }
+            catch {
+                $processName = $item.name
+                #Se capturan los errores en caso de suceder, se informa de ello en el archivo de logs
+                Add-Content -path $logFilePath "El proceso de '$processName' no se puede detener, es posible que le pertenezca a otro usuario. Y tengas acceso denegado"
+                #Se descarta el error capturado y debidamente informado en el archivo de log
+                Write-Output $errorGet | Out-Null
+            }        
+        }
     }
 }
 
