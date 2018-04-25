@@ -2,7 +2,7 @@
     .SYNOPSIS
     Nombre del Script: Ejercicio3.ps1
 
-    Trabajo Práctico Nro. 1 - Ejercicio 3
+    Trabajo Práctico Nro. 1 - Ejercicio 5
 
     Integrantes:
                 Arana, Juan Pablo        33904497
@@ -12,7 +12,19 @@
     Instancia de Entrega: Entrega
 
 
-    .DESCRIPTION   
+    .DESCRIPTION
+    Abre el documento pasado por parametro con los procesos con los que se va a interactuar
+    Soporta tres parametros exclusivos para interactuar
+    
+    .PARAMETER filePath
+    Path al documento que contiene los procesos que se van a evaluar.
+    
+    .PARAMETER U
+    Switch exclusivo, si se utiliza se mostrara el PID y los porcentajes de uso de CPU y de la memoria.
+    
+    .PARAMETER C
+    Switch exclusivo, si se utiliza se mostrara el PID y los porcentajes de uso de CPU y de la memoria.
+
 #>
     
 Param(
@@ -97,7 +109,7 @@ switch ($PSCmdlet.ParameterSetName) {
             $name = $item.name
             $processId = $item.proceso.ID
 
-            $processorUse = Get-Counter "\process($process)\% processor time" | % { $_.countersamples.cookedvalue }
+            $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
             $memoryUse = $item.proceso.WorkingSet 
 
             [decima]$realUseCPU = $processorUse / $numberOfProcessors
@@ -121,7 +133,7 @@ switch ($PSCmdlet.ParameterSetName) {
             $name = $item.name
             $processId = $item.proceso.ID
 
-            $processorUse = Get-Counter "\process($process)\% processor time" | % { $_.countersamples.cookedvalue }
+            $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" | % { $_.countersamples.cookedvalue }
             [decimal]$realUse = $processorUse / $numberOfProcessors
 
             Write-Output "------------------------------------------"
