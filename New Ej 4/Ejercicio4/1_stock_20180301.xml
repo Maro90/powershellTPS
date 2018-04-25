@@ -1,0 +1,12 @@
+<stock>
+	<producto>
+		<codigo>1</codigo>
+		<descripcion>resma A4</descripcion>
+		<stock>100</stock>
+	</producto>
+	<producto>
+		<codigo>3</codigo>
+		<descripcion>resma oficio</descripcion>
+		<stock>500</stock>
+	</producto>
+</stock>

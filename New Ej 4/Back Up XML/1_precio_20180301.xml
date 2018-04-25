@@ -1,0 +1,12 @@
+<precios>
+	<producto>
+		<codigo>1</codigo>
+		<descripción>resma A4</descripción>
+		<precio porcentaje="true">10</precio>
+	</producto>
+	<producto>
+		<codigo>3</codigo>
+		<descripción>resma oficio</descripción>
+		<precio>160</precio>
+	</producto>
+</precios>
