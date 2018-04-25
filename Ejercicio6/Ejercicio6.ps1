@@ -1,14 +1,30 @@
 ﻿<#
-    Nombre del Script: Ejercicio6.ps1
+.SYNOPSIS
+Juego de Memoria con TimeOut.
 
-    Trabajo Práctico Nro. 1 - Ejercicio 6
+.DESCRIPTION
+Se muestra una palabra (2 segundos), si se escribe correctamente (en menos de 5 segundos), se muestra la primera y otra más, y así sucesivamente.
+    
+.PARAMETER pathPalabras
+Path del archivo de palabras [OBLIGATORIO].
+    
+.PARAMETER pathPuntajes
+Path del archivo de puntajes. [OPCIONAL].
 
-    Integrantes:
-                Arana, Juan Pablo        33904497
-                Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicolás Martín   38319489
+.PARAMETER nombreJugador
+Nombre del usuario que jugará [OBLIGATORIO].
+    
+.NOTES
+Nombre del Script: Ejercicio6.ps1
 
-    Instancia de Entrega: Entrega
+Trabajo Práctico Nro. 1 - Ejercicio 6
+
+Integrantes:
+            Arana, Juan Pablo        33904497
+            Gonzalez, Mauro Daniel   35368160
+            Sapaya, Nicolás Martín   38319489
+
+Instancia de Entrega: Entrega
 #>
 
 Param([Parameter(Mandatory=$true)][string]$pathPalabras,

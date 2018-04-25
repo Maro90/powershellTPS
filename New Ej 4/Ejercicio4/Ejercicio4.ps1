@@ -1,16 +1,30 @@
 ﻿<#
-    Nombre del Script: Ejercicio4.ps1
+.SYNOPSIS
+Actualiza un xml de inventario.
 
-    Trabajo Práctico Nro. 1 - Ejercicio 4
+.DESCRIPTION
+Actualiza un inventario, basandose en 2 archivos, uno de stock  y otro de precios, proporcionados por el proveedor.
+    
+.PARAMETER pathInventario
+Path del archivo de palabras. [OBLIGATORIO].
+    
+.PARAMETER pathProveedores
+Directorio donde se encuentran los archivos de los proveedores. [OBLIGATORIO].
+    
+.NOTES
 
-    Integrantes:
-                Arana, Juan Pablo        33904497
-                Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicolás Martín   38319489
+Nota: Se han modificado los .xml, quitando los acentos, para poder utilizar el comando .Save()
 
-    Instancia de Entrega: Entrega
+Nombre del Script: Ejercicio4.ps1
 
-    Nota: Se han modificado los .xml, quitando los acentos, para poder utilizar el comando .Save()
+Trabajo Práctico Nro. 1 - Ejercicio 4
+
+Integrantes:
+            Arana, Juan Pablo        33904497
+            Gonzalez, Mauro Daniel   35368160
+            Sapaya, Nicolás Martín   38319489
+
+Instancia de Entrega: Entrega
 #>
 
 Param([Parameter(Mandatory=$true)][string]$pathInventario,
@@ -29,6 +43,7 @@ function ObtainFileName {
     .PARAMETER path
     Path de entrada.
     #>
+
     Param (
             [Parameter(Mandatory = $true)]
             [string]$path = ''
@@ -71,8 +86,24 @@ function AgregarProducto{
             [Parameter(Mandatory = $true)][string]$stock
     );
 
+    #Si estaba completamente vacio creo un XML nuevo con su raiz, sino uso existente
+    if(-not ($inventario.InnerXml)){
+        [xml]$inventario = New-Object System.Xml.XmlDocument
+        $root = $inventario.CreateNode("element","inventario",$null)
+    }
+
+    #Voy creando los hijos y le asigno los valores
     $newXmlProductElement = $inventario.CreateElement("producto");
-    $newXmlProduct = $inventario.inventario.AppendChild($newXmlProductElement)
+    #Si estaba completamente vacio le agrego el producto a la raiz que cree, sino a la existente
+    if(-not ($inventario.InnerXml)){
+
+        $newXmlProduct = $root.AppendChild($newXmlProductElement)
+    }else{
+
+        $newXmlProduct = $inventario.ChildNodes.AppendChild($newXmlProductElement)
+    }
+
+    #$newXmlProduct = $inventario.inventario.AppendChild($newXmlProductElement)
 
     $newXmlCodigoElement = $newXmlProduct.AppendChild($inventario.CreateElement("codigo"))
     $newXmlCodigoTextNode = $newXmlCodigoElement.AppendChild($inventario.CreateTextNode($codigo))
@@ -80,14 +111,19 @@ function AgregarProducto{
     $newXmlDescripcionElement = $newXmlProduct.AppendChild($inventario.CreateElement("descripcion"))
     $newXmlDescripcionTextNode = $newXmlDescripcionElement.AppendChild($inventario.CreateTextNode($descripcion))
 
-    $newXmlCodigoElement = $newXmlProduct.AppendChild($inventario.CreateElement("codigoProveedor"))
-    $newXmlCodigoTextNode = $newXmlCodigoElement.AppendChild($inventario.CreateTextNode($codigoProveedor))
+    $newXmlCodigoProvElement = $newXmlProduct.AppendChild($inventario.CreateElement("codigoProveedor"))
+    $newXmlCodigoProvTextNode = $newXmlCodigoProvElement.AppendChild($inventario.CreateTextNode($codigoProveedor))
  
-    $newXmlDescripcionElement = $newXmlProduct.AppendChild($inventario.CreateElement("precio"))
-    $newXmlDescripcionTextNode = $newXmlDescripcionElement.AppendChild($inventario.CreateTextNode($precio))
+    $newXmlPrecioElement = $newXmlProduct.AppendChild($inventario.CreateElement("precio"))
+    $newXmlPrecioTextNode = $newXmlPrecioElement.AppendChild($inventario.CreateTextNode($precio))
 
-    $newXmlCodigoElement = $newXmlProduct.AppendChild($inventario.CreateElement("stock"))
-    $newXmlCodigoTextNode = $newXmlCodigoElement.AppendChild($inventario.CreateTextNode($stock))
+    $newXmlStockElement = $newXmlProduct.AppendChild($inventario.CreateElement("stock"))
+    $newXmlStockTextNode = $newXmlStockElement.AppendChild($inventario.CreateTextNode($stock))
+
+    #Si estaba completamente vacio añado la raiz
+    if(-not ($inventario.InnerXml)){
+        $inventario.AppendChild($root) | Out-Null
+    }
 
     $inventario.Save($pathInventario)
 }
@@ -273,14 +309,29 @@ function ObtenerPrecio{
 
     Param (
             [Parameter(Mandatory = $true)]$produ,
-            [Parameter(Mandatory = $true)]$prodPrecio
+            [Parameter(Mandatory = $true)]$prodPrecio,
+            [Parameter(Mandatory = $false)][boolean]$porcentajeOff
     );
 
     forEach($item in $prodPrecio){
+        if($porcentajeOff -eq $true){
+            #Si coinciden las descripciones. devuelvo el precio
 
-        #Si coinciden las descripciones. devuelvo el precio
-        if($produ -eq $item.ChildNodes.Item(1).'#text'){
-            return [string]($item.ChildNodes.Item(2).'#text')
+            #ME TENGO QUE FIJAR SI ES PORCENTAJE O NO
+
+            if($produ -eq $item.ChildNodes.Item(1).'#text'){
+                #Si es true, retorno 0 (no me interesa), si es false devuelvo el precio
+                if($item.ChildNodes.Item(2).porcentaje){
+                    return  "0"
+                }else{
+                    return [string]($item.ChildNodes.Item(2).'#text')
+                }
+            }
+        }else{
+            #Si coinciden las descripciones. devuelvo el precio
+            if($produ -eq $item.ChildNodes.Item(1).'#text'){
+                return [string]($item.ChildNodes.Item(2).'#text')
+            }
         }
     }
 }
@@ -299,6 +350,7 @@ function ActualizarInventario{
     .PARAMETER invent
     Posee el inventario.
     #>
+
     Param (
             [Parameter(Mandatory = $true)]$stock,
             [Parameter(Mandatory = $true)]$invent
@@ -306,34 +358,103 @@ function ActualizarInventario{
 
     #Actualizo Inventario, primero en paro en el primer archivo de stock.
     forEach($item in $stock){
-        
+
         #Hago GET CONTENT de stock
         [XML]$stockXML = Get-Content ($pathProveedores + '\' + $item.Name)
 
-        #Hago GET CONTENT de precio
-        [XML]$precioXML = Get-Content ($pathProveedores + '\' + ($item.Name.Replace('stock','precio')))
+        #Me fijo si el archivo de stock esta vacio, o solo tiene root
+        if(($stockXML.innerXML) -or ($stockXML.stock.innerXML)){
 
-        #Me fijo si tengo que actualizar precio, si es asi lo hago
-        ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent
+            #Hago GET CONTENT de precio
+            [XML]$precioXML = Get-Content ($pathProveedores + '\' + ($item.Name.Replace('stock','precio')))
 
-        #Me tengo que fijar si lo que esta en el archivo de stock, esta o no en el de inventario.
-        forEach($prod in $stockXML.stock.producto){
+            #Me fijo si esta vacio el de precios, si es asi no puedo actualizar precios
+            if(($precioXML.innerXML) -and ($precioXML.precios.innerXML)){
 
-            #Me fijo si hay un producto nuevo (debe estar en los dos archivos)[false], o si se tiene que actualizar stock [true]
-            if(buscarEnInventario -producto ($prod.ChildNodes.Item(1).'#text') -codProv $prod.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)){
-                
-                #Actualizo el stock en el inve
-                ActualizarStock -prodStock $prod -invent $invent
-            }else{
-
-                #Primero debo obtener el precio del archivo de precios, luego agrego el producto.
-                [string]$precio = ObtenerPrecio -produ ($prod.ChildNodes.Item(1).'#text') -prodPrecio ($precioXML.precios.producto)
-                AgregarProducto -codigo $prod.ChildNodes.Item(0).'#text' -descripcion $prod.ChildNodes.Item(1).'#text' -codigoProveedor $item.Name.Chars(0) -precio $precio -stock $prod.ChildNodes.Item(2).'#text'
+                #Me fijo si tengo que actualizar precio, si es asi lo hago
+                ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent
             }
+
+            #Me tengo que fijar si lo que esta en el archivo de stock, esta o no en el de inventario.
+            forEach($prod in $stockXML.stock.producto){
+
+                #Me fijo si hay un producto nuevo (debe estar en los dos archivos)[false], o si se tiene que actualizar stock [true]
+                if(buscarEnInventario -producto ($prod.ChildNodes.Item(1).'#text') -codProv $prod.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)){
+                    
+
+                    #Actualizo el stock en el invent
+                    ActualizarStock -prodStock $prod -invent $invent
+                }else{
+
+                    #Me fijo si esta vacio el de precios, si es asi no puedo insertar nuevos productos
+                    if(($precioXML.innerXML) -and ($precioXML.precios.innerXML)){
+
+                        #Primero debo obtener el precio del archivo de precios, luego agrego el producto.
+                        [string]$precio = ObtenerPrecio -produ ($prod.ChildNodes.Item(1).'#text') -prodPrecio ($precioXML.precios.producto)
+                        AgregarProducto -codigo $prod.ChildNodes.Item(0).'#text' -descripcion $prod.ChildNodes.Item(1).'#text' -codigoProveedor $item.Name.Chars(0) -precio $precio -stock $prod.ChildNodes.Item(2).'#text'
+                    }
+                }
+            }
+
+        }else{
+
+            #Puede estar vacio Stock, pero precios no, entonces debo actualizar precios.
+            #Hago GET CONTENT de precio
+            [XML]$precioXML = Get-Content ($pathProveedores + '\' + ($item.Name.Replace('stock','precio')))
+
+            #Me fijo si tengo que actualizar precio, si es asi lo hago
+            ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent
         }
     }
 }
 
+function ArchivoVacio{
+    <#
+    .SYNOPSIS
+    Carga los productos validos.
+
+    .DESCRIPTION
+    Carga los productos validos, en el invetario que se encontra vacio, o solo con root.
+    
+    .PARAMETER archivosStock
+    Archivos del stock.
+
+    .PARAMETER pathProveedores
+    Path a buscar los archivos de proveedores.
+    #>
+
+    Param (
+            [Parameter(Mandatory = $true)]$archivosStock,
+            [Parameter(Mandatory = $true)]
+            [string]$pathProveedores
+    );
+
+    forEach($item in $archivosStock){
+        
+        #Hago GET CONTENT de stock
+        [XML]$stockXML = Get-Content ($pathProveedores + '\' + $item.Name)
+
+        #Si esta vacio stock, no hago nada, ya que no debo actualizar precios
+        if(($stockXML.innerXML) -or ($stockXML.stock.innerXML)){
+
+            #Hago GET CONTENT de precio
+            [XML]$precioXML = Get-Content ($pathProveedores + '\' + ($item.Name.Replace('stock','precio')))
+
+            #Me tengo que fijar si lo que esta en el archivo de stock, esta o no en el de inventario.
+            forEach($prod in $stockXML.stock.producto){
+            
+                #Agrego Producto Si No Tiene Porcentaje En Preci
+                [string]$precio = ObtenerPrecio -produ ($prod.ChildNodes.Item(1).'#text') -prodPrecio ($precioXML.precios.producto) -porcentajeOff $true
+
+                if($precio -ne 0){
+
+                    AgregarProducto -codigo $prod.ChildNodes.Item(0).'#text' -descripcion $prod.ChildNodes.Item(1).'#text' -codigoProveedor $item.Name.Chars(0) -precio $precio -stock $prod.ChildNodes.Item(2).'#text'
+                    $inventario = [System.Xml.XmlDocument](Get-Content $pathInventario)
+                }
+            }
+        }
+    }
+}
 function ChangePath{
     <#
     .SYNOPSIS
@@ -348,12 +469,13 @@ function ChangePath{
     .PARAMETER name
     Nombre nuevo
     #>
+
     Param (
             [Parameter(Mandatory = $true)]
             [string]$path = '',
             [Parameter(Mandatory = $true)]
             [string]$name
-        );
+    );
     
     #Spliteo el path de palabras y creo un nuevo path que será el de puntajes.
     $splitPath = $path.Split('\') 
@@ -370,6 +492,16 @@ function ChangePath{
     return $newPath
 }
 
+#Testeo si el/los path/s ingresado/s es/son correcto/s.
+if (-not (Test-Path $pathInventario)){
+    Write-Error 'El path de Inventario es erroneo. pathInventario, pathProveedores'
+    return;
+}
+
+if (-not (Test-Path $pathProveedores)){
+    Write-Error 'El path de proveedores es erroneo. pathInventario, pathProveedores'
+    return;
+}
 
 #Se realiza back up
 if($backUp -eq $true){
@@ -383,6 +515,7 @@ if($backUp -eq $true){
 #Obtengo todos lo que haya en el directorio de proveedores, luego busco los .xml stock
 #Solo busco lo de stock, porque vienen de a pares, si existe el de stock, existe el de precio, accedo cambiando el nombre con replace, en otra funcion
 $proveedores = Get-ChildItem $pathProveedores -File -Recurse
+
 forEach($item in $proveedores){
 
     $archivosStock = ($proveedores | Select-Object -Property Name | Where-Object Name -Match "[0-9]" | Where-Object Name -Match "_" | Where-Object Name -Match ".xml" | Where-Object Name -Match "stock")
@@ -390,4 +523,11 @@ forEach($item in $proveedores){
 
 $inventario = [System.Xml.XmlDocument](Get-Content $pathInventario)
 
-ActualizarInventario -stock $archivosStock -invent $inventario
+#Documento Totalmente Vacio o Productos Vacios
+if((-not ($inventario.innerXML)) -or (-not ($inventario.inventario.innerXML))){
+   
+    ArchivoVacio -archivosStock $archivosStock -pathProveedores $pathProveedores
+}else{
+
+    ActualizarInventario -stock $archivosStock -invent $inventario
+}

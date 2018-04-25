@@ -1,0 +1,23 @@
+<inventario>
+  <producto>
+    <codigo>1</codigo>
+    <descripcion>resma A4</descripcion>
+    <codigoProveedor>1</codigoProveedor>
+    <precio>165</precio>
+    <stock>1000</stock>
+  </producto>
+  <producto>
+    <codigo>1</codigo>
+    <descripcion>tonner</descripcion>
+    <codigoProveedor>2</codigoProveedor>
+    <precio>9999</precio>
+    <stock>400</stock>
+  </producto>
+  <producto>
+    <codigo>2</codigo>
+    <descripcion>carpeta carton</descripcion>
+    <codigoProveedor>1</codigoProveedor>
+    <precio>10</precio>
+    <stock>50</stock>
+  </producto>
+</inventario>
