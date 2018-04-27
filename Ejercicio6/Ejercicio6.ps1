@@ -65,14 +65,20 @@ function Read-HostWithTimeout {
     $fullString='';
     while ((Get-Date) -lt $end){
         if ($host.ui.RawUI.KeyAvailable){
-            $key = $host.UI.RawUI.ReadKey("NoEcho, IncludeKeyUp").Character;  
+            $key = $host.UI.RawUI.ReadKey("NoEcho, IncludeKeyUp").Character;
             if ($first -eq $false){
                 Write-Host $key -NoNewline
                 if ([System.Text.Encoding]::ASCII.GetBytes($key.ToString())[0] -eq 13 -and $first -eq $false){
                     Clear-Host
                     break;
                 }
-                $fullString += $key;
+                if ([System.Text.Encoding]::ASCII.GetBytes($key.ToString())[0] -ne 8){
+                    $fullString += $key;
+                }else{
+                   $fullString = $fullString.Remove(($fullString.Length)-1)
+                   Clear-Host
+                   Write-Host ": $fullString" -NoNewline
+                }
                 $end = (Get-Date).AddSeconds($Timeout)
             }else{
                 $first = $false;                
@@ -219,13 +225,15 @@ function mostrarPalabra{
         while($escribioBien -eq $false){
             forEach($item in $arrayWords){
                 if($item -eq ($input = Read-HostWithTimeout -Timeout $writeTime)){
+
                     $escribioBien = $true
                 }else{
+
                     return $false
                 }
             }
         }
-        return $escribioBien 
+        return $escribioBien
     }
 }
 
@@ -297,12 +305,12 @@ $arrayWords = New-Object System.Collections.ArrayList
 
 #Mientras que escriba bien todas las palabras, continuara sumando puntos.
 do{
+    $result = mostrarPalabra -allWords $allWords -arrayWords $arrayWords; 
     $points++;
-    $result = mostrarPalabra -allWords $allWords -arrayWords $arrayWords 
-}while($result -eq $true)
+}while($result[1] -eq $true)
 
 #Ha perdido muestro el puntaje del momento.
-Clear-Host
+#Clear-Host
 Write-Output "Juego Terminado, Score: $points"
 
 #Dependiendo si se ingreso path de puntaje o si es path relativo, llama o no a convertir el path.
