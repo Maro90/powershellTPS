@@ -125,7 +125,7 @@ function AgregarProducto{
         $inventario.AppendChild($root) | Out-Null
     }
 
-    $inventario.Save($pathInventario)
+    $inventario.Save($inventarioFullPath)
 }
 
 function ActualizarStock{
@@ -166,7 +166,7 @@ function ActualizarStock{
     }
 
     #Guardo cambios
-    $inventario.Save($pathInventario)
+    $inventario.Save($inventarioFullPath)
 }
 
 function ActualizarPrecio{
@@ -215,7 +215,7 @@ function ActualizarPrecio{
     }
 
     #Guardo cambios
-    $inventario.Save($pathInventario)
+    $inventario.Save($inventarioFullPath)
 }
 
 function BuscarEnInventario{
@@ -449,7 +449,7 @@ function ArchivoVacio{
                 if($precio -ne 0){
 
                     AgregarProducto -codigo $prod.ChildNodes.Item(0).'#text' -descripcion $prod.ChildNodes.Item(1).'#text' -codigoProveedor $item.Name.Chars(0) -precio $precio -stock $prod.ChildNodes.Item(2).'#text'
-                    $inventario = [System.Xml.XmlDocument](Get-Content $pathInventario)
+                    $inventario = [System.Xml.XmlDocument](Get-Content $inventarioFullpath)
                 }
             }
         }
@@ -503,11 +503,14 @@ if (-not (Test-Path $pathProveedores)){
     return;
 }
 
+#Guarda la direccion absoluta del documento
+$inventarioFullPath = (Get-ChildItem $pathInventario).fullName
+
 #Se realiza back up
 if($backUp -eq $true){
     $nameArchivo = ObtainFileName -path $pathInventario
     $content = [System.Xml.XmlDocument] (Get-Content $pathInventario)
-    $newName = ChangePath -path $pathInventario -name ($nameArchivo + '_BackUp.xml')
+    $newName = ChangePath -path $inventarioFullPath -name ($nameArchivo + '_BackUp.xml')
     $content.Save($newName)
     Write-Output 'Se ha realizado Back Up del archivo Inventario.'
 }
