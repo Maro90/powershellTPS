@@ -33,8 +33,15 @@
 #>
 
 Param(
-  [string]$path
+    [parameter(Mandatory=$true)]
+    [validateNotNullorEmpty()]
+    [string]$path
   )
+
+if ((Test-Path $path) -eq $false){
+    Write-Output "El directorio no existe"
+    return
+}
 
 $filesCount = 0
 $words = @{}
