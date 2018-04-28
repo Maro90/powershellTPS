@@ -41,6 +41,7 @@
     
 Param(
     [parameter(Mandatory=$true,Position=1)]
+    [validateNotNullorEmpty()]
     [string]$filePath,
     [parameter(Mandatory=$true,ParameterSetName="setU")]
     [switch]$U,
@@ -49,6 +50,12 @@ Param(
     [parameter(Mandatory=$true,ParameterSetName="setK")]
     [switch]$K
 )
+
+if ((Test-Path $filePath) -eq $false){
+    Write-Output "Su archivo no es existe."
+    return
+}
+
 
 #Se obtienen los procesos con los cuales se va a interactuar
 $texto = (Get-Content $filePath)
