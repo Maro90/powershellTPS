@@ -137,6 +137,17 @@ $func ={
 $logExists = Test-Path $logPath
 $documentExist = Test-Path $documentPath
 
+if (((Split-Path -Parent $documentPath) | Test-Path) -eq $false){
+    Write-Output "El path del documento no existe"
+    return
+}
+if (((Split-Path -Parent $logPath) | Test-Path) -eq $false){
+    Write-Output "El path del archivo de log no existe"
+    return
+}
+
+
+
 #Si el documento o el archivo de log no existieran, los crea
 if($logExists -ne $true){
     New-Item -path $logPath -ItemType 'file'
