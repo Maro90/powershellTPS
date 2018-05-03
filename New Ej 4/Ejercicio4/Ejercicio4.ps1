@@ -24,11 +24,11 @@ Integrantes:
             Gonzalez, Mauro Daniel   35368160
             Sapaya, Nicolás Martín   38319489
 
-Instancia de Entrega: Entrega
+Instancia de Entrega: Primer Re Entrega
 #>
 
-Param([Parameter(Mandatory=$true)][string]$pathInventario,
-      [Parameter(Mandatory=$true)][string]$pathProveedores,
+Param([Parameter(Mandatory=$true)][string][validateNotNullorEmpty()]$pathInventario,
+      [Parameter(Mandatory=$true)][string][validateNotNullorEmpty()]$pathProveedores,
       [switch]$backUp
 )
 
@@ -103,8 +103,6 @@ function AgregarProducto{
         $newXmlProduct = $inventario.ChildNodes.AppendChild($newXmlProductElement)
     }
 
-    #$newXmlProduct = $inventario.inventario.AppendChild($newXmlProductElement)
-
     $newXmlCodigoElement = $newXmlProduct.AppendChild($inventario.CreateElement("codigo"))
     $newXmlCodigoTextNode = $newXmlCodigoElement.AppendChild($inventario.CreateTextNode($codigo))
  
@@ -143,8 +141,8 @@ function ActualizarStock{
     Posee el inventario.
     #>
     Param (
-            [Parameter(Mandatory = $true)]$prodStock,
-            [Parameter(Mandatory = $true)]$invent
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$prodStock,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent
     );
 
 
@@ -184,8 +182,8 @@ function ActualizarPrecio{
     Posee el inventario.
     #>
     Param (
-            [Parameter(Mandatory = $true)]$prodPrecios,
-            [Parameter(Mandatory = $true)]$invent
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$prodPrecios,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent
     );
 
 
@@ -232,14 +230,14 @@ function BuscarEnInventario{
     .PARAMETER codProv
     Codigo del proveedor del parametro 'producto'.
 
-    .PARAMETER invent
+    .PARAMETER productosInventario
     Productos del inventario.
     #>
 
     Param (
-            [Parameter(Mandatory = $true)]$producto,
-            [Parameter(Mandatory = $true)]$codProv,
-            [Parameter(Mandatory = $true)]$productosInventario
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$producto,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$codProv,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$productosInventario
     );
 
     #Itero los productos del inventario para poder comparar
@@ -270,14 +268,14 @@ function DevolverProdInv{
     .PARAMETER codProv
     Codigo del proveedor del parametro 'producto'.
 
-    .PARAMETER invent
+    .PARAMETER productosInventario
     Productos del inventario.
     #>
 
     Param (
-            [Parameter(Mandatory = $true)]$producto,
-            [Parameter(Mandatory = $true)]$codProv,
-            [Parameter(Mandatory = $true)]$productosInventario
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$producto,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$codProv,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$productosInventario
     );
 
     #Itero los productos del inventario para poder comparar
@@ -305,11 +303,14 @@ function ObtenerPrecio{
 
     .PARAMETER prodPrecio
     Todos los productos del archivo de precios.
+
+    .PARAMETER porcentajeOff
+    Indica si devuelve porcentaje o no.
     #>
 
     Param (
-            [Parameter(Mandatory = $true)]$produ,
-            [Parameter(Mandatory = $true)]$prodPrecio,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$produ,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$prodPrecio,
             [Parameter(Mandatory = $false)][boolean]$porcentajeOff
     );
 
@@ -352,8 +353,8 @@ function ActualizarInventario{
     #>
 
     Param (
-            [Parameter(Mandatory = $true)]$stock,
-            [Parameter(Mandatory = $true)]$invent
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$stock,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent
     );
 
     #Actualizo Inventario, primero en paro en el primer archivo de stock.
@@ -424,7 +425,7 @@ function ArchivoVacio{
     #>
 
     Param (
-            [Parameter(Mandatory = $true)]$archivosStock,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$archivosStock,
             [Parameter(Mandatory = $true)]
             [string]$pathProveedores
     );
@@ -455,6 +456,7 @@ function ArchivoVacio{
         }
     }
 }
+
 function ChangePath{
     <#
     .SYNOPSIS
@@ -508,8 +510,8 @@ $inventarioFullPath = (Get-ChildItem $pathInventario).fullName
 
 #Se realiza back up
 if($backUp -eq $true){
-    $nameArchivo = ObtainFileName -path $pathInventario
-    $content = [System.Xml.XmlDocument] (Get-Content $pathInventario)
+    $nameArchivo = ObtainFileName -path $inventarioFullPath
+    $content = [System.Xml.XmlDocument] (Get-Content $inventarioFullPath)
     $newName = ChangePath -path $inventarioFullPath -name ($nameArchivo + '_BackUp.xml')
     $content.Save($newName)
     Write-Output 'Se ha realizado Back Up del archivo Inventario.'
