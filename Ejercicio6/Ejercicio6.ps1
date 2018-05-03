@@ -24,7 +24,7 @@ Integrantes:
             Gonzalez, Mauro Daniel   35368160
             Sapaya, Nicolás Martín   38319489
 
-Instancia de Entrega: Entrega
+Instancia de Entrega: Primer Re Entrega
 #>
 
 Param([Parameter(Mandatory=$true)][string]$pathPalabras,
@@ -199,8 +199,8 @@ function mostrarPalabra{
     Son todas las palabras que se van seleccionando al azar.
     #>
 
-    Param([Parameter(Mandatory=$true)]$allWords,
-          [Parameter(Mandatory=$true)]$arrayWords
+    Param([Parameter(Mandatory=$true)][validateNotNullorEmpty()]$allWords,
+          [Parameter(Mandatory=$true)][validateNotNullorEmpty()]$arrayWords
     )
 
     #Flag si escribio bien la palabra, elijo una palabra al azar de todas las que hay y la agrego al array, limpio la consola.
@@ -271,6 +271,9 @@ function ConvertPath {
 #Flag por si esta creado o no el archivo de puntajes para no hacer el import.
 $notCreated = $false
 
+#Guarda la direccion absoluta del documento
+$palabrasFullPath = (Get-ChildItem $pathPalabras).fullName
+
 #Testeo si el/los path/s ingresado/s es/son correcto/s.
 if (-not (Test-Path $pathPalabras)){
     Write-Error 'El path de palabras es erroneo. [pathPuntajes], pathPalabras, nombreJugador'
@@ -278,7 +281,7 @@ if (-not (Test-Path $pathPalabras)){
 }
 
 if (-not (Test-Path $pathPuntajes)){
-    if(($pathPuntajes -eq 'puntajes.csv') -or($pathPuntajes -eq (ConvertPath -path $pathPalabras))){
+    if(($pathPuntajes -eq 'puntajes.csv') -or($pathPuntajes -eq (ConvertPath -path $palabrasFullPath))){
         $notCreated = $true
     }else{
         Write-Error 'El path de puntajes es erroneo. [pathPuntajes], pathPalabras, nombreJugador'
@@ -317,6 +320,6 @@ Write-Output "Juego Terminado, Score: $points"
 if((($pathPalabras -eq 'palabras.txt') -or ($pathPalabras -eq '.\palabras.txt')) -or ($pathPuntajes -ne 'puntajes.csv')){
     saveTable -nombre $nombreJugador -point $points -pathPuntaje $pathPuntajes
 }else{
-    $pathPuntajes = ConvertPath -path $pathPalabras
+    $pathPuntajes = ConvertPath -path $palabrasFullPath
     saveTable -nombre $nombreJugador -point $points -pathPuntaje $pathPuntajes
 }
