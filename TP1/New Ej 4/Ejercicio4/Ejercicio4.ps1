@@ -142,18 +142,18 @@ function ActualizarStock{
     #>
     Param (
             [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$prodStock,
-            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$name
     );
-
 
     #Itero buscando coincidencias, si las hay, actualizo
     forEach($item in $prodStock){
 
         #Me fijo si se tiene que actualizar precio [true]
-        if(buscarEnInventario -producto ($item.ChildNodes.Item(1).'#text') -codProv $item.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)){
+        if(buscarEnInventario -producto ($item.ChildNodes.Item(0).'#text') -codProv $name.Chars(0) -productosInventario ($invent.inventario.producto)){
             
             #Busco el producto de inventario a escribir
-            $invWrite = DevolverProdInv -producto ($item.ChildNodes.Item(1).'#text') -codProv $item.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)
+            $invWrite = DevolverProdInv -producto ($item.ChildNodes.Item(0).'#text') -codProv $name.Chars(0) -productosInventario ($invent.inventario.producto)
 
             #Sumo Stock
             [int] $stockViejo = $invWrite.ChildNodes.Item(4)."#text"
@@ -183,7 +183,8 @@ function ActualizarPrecio{
     #>
     Param (
             [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$prodPrecios,
-            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$invent,
+            [Parameter(Mandatory = $true)][validateNotNullorEmpty()]$name
     );
 
 
@@ -191,10 +192,10 @@ function ActualizarPrecio{
     forEach($item in $prodPrecios){
         
         #Me fijo si se tiene que actualizar precio [true]
-        if(buscarEnInventario -producto ($item.ChildNodes.Item(1).'#text') -codProv $item.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)){
+        if(buscarEnInventario -producto ($item.ChildNodes.Item(0).'#text') -codProv $name.Chars(0) -productosInventario ($invent.inventario.producto)){
             
             #Busco el producto de inventario a escribir
-            $invWrite = DevolverProdInv -producto ($item.ChildNodes.Item(1).'#text') -codProv $item.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)
+            $invWrite = DevolverProdInv -producto ($item.ChildNodes.Item(0).'#text') -codProv $name.Chars(0) -productosInventario ($invent.inventario.producto)
 
             #[true] es un porcentaje, [false] monto a sobreescribir (actualización de precio)
             if($item.ChildNodes.Item(2).porcentaje){
@@ -244,7 +245,7 @@ function BuscarEnInventario{
     forEach($item in $productosInventario){
 
         #Me fijo si coincide la descripcion y el codigo de proveedor (así será el mismo item)
-        if(($producto -eq ($item.ChildNodes.Item(1).'#text')) -and ($codProv -eq ($item.ChildNodes.Item(0).'#text'))){
+        if(($producto -eq ($item.ChildNodes.Item(0).'#text')) -and ($codProv -eq ($item.ChildNodes.Item(2).'#text'))){
             #Debo Actualizar El Producto (ya existia)
             return $true
         }  
@@ -282,7 +283,7 @@ function DevolverProdInv{
     forEach($item in $productosInventario){
 
         #Me fijo si coincide la descripcion y el codigo de proveedor (así será el mismo item)
-        if(($producto -eq ($item.ChildNodes.Item(1).'#text')) -and ($codProv -eq ($item.ChildNodes.Item(0).'#text'))){
+        if(($producto -eq ($item.ChildNodes.Item(0).'#text')) -and ($codProv -eq ($item.ChildNodes.Item(2).'#text'))){
 
             #Devuelvo el producto del inventario para actualizar
             return $item
@@ -320,7 +321,7 @@ function ObtenerPrecio{
 
             #ME TENGO QUE FIJAR SI ES PORCENTAJE O NO
 
-            if($produ -eq $item.ChildNodes.Item(1).'#text'){
+            if($produ -eq $item.ChildNodes.Item(0).'#text'){
                 #Si es true, retorno 0 (no me interesa), si es false devuelvo el precio
                 if($item.ChildNodes.Item(2).porcentaje){
                     return  "0"
@@ -330,7 +331,7 @@ function ObtenerPrecio{
             }
         }else{
             #Si coinciden las descripciones. devuelvo el precio
-            if($produ -eq $item.ChildNodes.Item(1).'#text'){
+            if($produ -eq $item.ChildNodes.Item(0).'#text'){
                 return [string]($item.ChildNodes.Item(2).'#text')
             }
         }
@@ -373,25 +374,24 @@ function ActualizarInventario{
             if(($precioXML.innerXML) -and ($precioXML.precios.innerXML)){
 
                 #Me fijo si tengo que actualizar precio, si es asi lo hago
-                ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent
+                ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent -name $item.Name
             }
 
             #Me tengo que fijar si lo que esta en el archivo de stock, esta o no en el de inventario.
             forEach($prod in $stockXML.stock.producto){
 
                 #Me fijo si hay un producto nuevo (debe estar en los dos archivos)[false], o si se tiene que actualizar stock [true]
-                if(buscarEnInventario -producto ($prod.ChildNodes.Item(1).'#text') -codProv $prod.ChildNodes.Item(0).'#text' -productosInventario ($invent.inventario.producto)){
-                    
+                if(buscarEnInventario -producto ($prod.ChildNodes.Item(0).'#text') -codProv $item.Name.Chars(0) -productosInventario ($invent.inventario.producto)){                   
 
                     #Actualizo el stock en el invent
-                    ActualizarStock -prodStock $prod -invent $invent
+                    ActualizarStock -prodStock $prod -invent $invent -name $item.Name
                 }else{
 
                     #Me fijo si esta vacio el de precios, si es asi no puedo insertar nuevos productos
                     if(($precioXML.innerXML) -and ($precioXML.precios.innerXML)){
 
                         #Primero debo obtener el precio del archivo de precios, luego agrego el producto.
-                        [string]$precio = ObtenerPrecio -produ ($prod.ChildNodes.Item(1).'#text') -prodPrecio ($precioXML.precios.producto)
+                        [string]$precio = ObtenerPrecio -produ ($prod.ChildNodes.Item(0).'#text') -prodPrecio ($precioXML.precios.producto)
                         AgregarProducto -codigo $prod.ChildNodes.Item(0).'#text' -descripcion $prod.ChildNodes.Item(1).'#text' -codigoProveedor $item.Name.Chars(0) -precio $precio -stock $prod.ChildNodes.Item(2).'#text'
                     }
                 }
@@ -404,7 +404,7 @@ function ActualizarInventario{
             [XML]$precioXML = Get-Content ($pathProveedores + '\' + ($item.Name.Replace('stock','precio')))
 
             #Me fijo si tengo que actualizar precio, si es asi lo hago
-            ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent
+            ActualizarPrecio -prodPrecios ($precioXML.precios.producto) -invent $invent -name $item.Name
         }
     }
 }
