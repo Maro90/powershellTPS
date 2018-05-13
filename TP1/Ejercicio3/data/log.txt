@@ -16,3 +16,15 @@ Updated FileName:		midocumento_modif.txt
 Characters Changed:		5
 Date:					Tuesday, 24/04/2018 13:40:08
 
+----------------------------------------------------------
+FileName:				midoc.txt
+Updated FileName:		midoc_modif.txt
+Characters Changed:		14
+Date:					domingo, 13/05/2018 19:07:28
+
+----------------------------------------------------------
+FileName:				midoc.txt
+Updated FileName:		midoc_modif.txt
+Characters Changed:		14
+Date:					domingo, 13/05/2018 19:10:13
+

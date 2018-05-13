@@ -34,7 +34,7 @@
                 Gonzalez, Mauro Daniel   35368160
                 Sapaya, Nicolás Martín   38319489
 
-    Instancia de Entrega: Entrega
+    Instancia de Entrega: 1er Re Entrega
 
 
     #>
@@ -133,32 +133,47 @@ $func ={
         Add-Content -path $logPath $log
     }
 }
-#Revisa que exista el documento y el archivo de log
-$logExists = Test-Path $logPath
-$documentExist = Test-Path $documentPath
 
 if (((Split-Path -Parent $documentPath) | Test-Path) -eq $false){
+    Write-Output ""
     Write-Output "El path del documento no existe"
+    Write-Output ""
     return
 }
 if (((Split-Path -Parent $logPath) | Test-Path) -eq $false){
+    Write-Output ""
     Write-Output "El path del archivo de log no existe"
+    Write-Output ""
     return
 }
 
+#Guarda la direccion absoluta del documento y del archivo de log
+$logFullPath = Split-Path -Path $logPath -Resolve
+$logFullPath +="\"
+$logFullPath += Split-Path -Leaf $logPath -Resolve
 
+$documentFullpath = Split-Path -Path $documentPath -Resolve
+$documentFullpath +="\"
+$documentFullpath += Split-Path -Leaf $documentPath -Resolve
+
+if($documentFullpath -eq $logFullpath){
+    Write-Output ""
+    Write-Output "El path del log no puede ser el mismo que el del archivo."
+    Write-Output ""
+    return
+}
+
+#Revisa que exista el documento y el archivo de log
+$logExists = Test-Path $logFullPath
+$documentExist = Test-Path $documentFullpath
 
 #Si el documento o el archivo de log no existieran, los crea
 if($logExists -ne $true){
-    New-Item -path $logPath -ItemType 'file'
+    New-Item -path $logFullPath -ItemType 'file'
 }
 if($documentExist -ne $true){
-    New-Item -path $documentPath -ItemType 'file'
+    New-Item -path $documentFullpath -ItemType 'file'
 }
-
-#Guarda la direccion absoluta del documento y del archivo de log
-$logFullpath = (Get-ChildItem $logPath).fullName
-$documentFullpath = (Get-ChildItem $documentPath).fullName
 
 #Crea el EventMessageObject para enviarselo al proceso que escucha el evento del programa
 $eventData = [PSCustomObject]@{
