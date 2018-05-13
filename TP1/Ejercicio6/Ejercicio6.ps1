@@ -3,7 +3,7 @@
 Juego de Memoria con TimeOut.
 
 .DESCRIPTION
-Se muestra una palabra (2 segundos), si se escribe correctamente (en menos de 5 segundos), se muestra la primera y otra más, y así sucesivamente.
+Se muestra una palabra (3 segundos), si se escribe correctamente (en menos de 5 segundos), se muestra la primera y otra más, y así sucesivamente.
     
 .PARAMETER pathPalabras
 Path del archivo de palabras [OBLIGATORIO].
@@ -213,12 +213,13 @@ function mostrarPalabra{
     while($escribioBien -eq $true){
         $escribioBien = $false
         forEach($item in $arrayWords){
-            Write-Host "$item"
-            $time = [System.Diagnostics.Stopwatch]::StartNew();
-            while($time.Elapsed.TotalSeconds -lt $readTime){
-            }
-            $time.Stop();
+            Write-Host "$item"  
         }
+        $time = [System.Diagnostics.Stopwatch]::StartNew();
+        while($time.Elapsed.TotalSeconds -lt $readTime){
+        }
+        $time.Stop();
+
         Clear-Host
         
         #Itero todas las palabras a escribir, si se equivoca, pierde. (se usa la funcion Read-HostWithTimeout para leer la palabra)
@@ -290,7 +291,7 @@ if (-not (Test-Path $pathPuntajes)){
 }
 
 #Establezco los tiempos en que muestra las palabras, y el time out para escribir.
-$readTime = 2
+$readTime = 3
 $writeTime = 5
 
 #Creo la variable donde almacenará los puntos, obtengo todas las palabras del archivo.
