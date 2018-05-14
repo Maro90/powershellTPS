@@ -29,7 +29,7 @@
             Gonzalez, Mauro Daniel   35368160
             Sapaya, Nicolás Martín   38319489
 
-    Instancia de Entrega: Entrega
+    Instancia de Entrega: Primer Re Entrega
 #>
 
 Param(
@@ -50,12 +50,14 @@ $preps = @("a", "ante", "bajo", "cabe", "con", "contra", "de", "desde", "durante
 Get-ChildItem -Path $path -Recurse | ?{$_.name.Contains(".html")} | %{
     $filesCount++
     $title = Select-Xml -Path $_.fullname -XPath "/html/head/title" | Select-Object -ExpandProperty Node | Select-Object -ExpandProperty innerxml
-    $title.trim().split(" ") | %{
-        if(-not $preps.Contains($_))
+    if(-not ($title -eq $null)){
+        $title.trim().split(" ") | %{
+        if((-not $preps.Contains($_)) -and (-not($_ -eq "")))
             {
                 $words[$_]++
             }
-    }    
+        }   
+    }     
 }
 
 Write-Host "Paginas analizadas: $filesCount"
