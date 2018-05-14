@@ -28,12 +28,12 @@
     .Notes
     Nombre del Script: Ejercicio5.ps1
 
-    Trabajo Pr√°ctico Nro. 1 - Ejercicio 5
+    Trabajo Pr·ctico Nro. 1 - Ejercicio 5
 
     Integrantes:
                 Arana, Juan Pablo        33904497
                 Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicol√°s Mart√≠n   38319489
+                Sapaya, Nicol·s MartÌn   38319489
 
     Instancia de Entrega: Entrega
 
