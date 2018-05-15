@@ -28,14 +28,14 @@
     .Notes
     Nombre del Script: Ejercicio5.ps1
 
-    Trabajo Práctico Nro. 1 - Ejercicio 5
+    Trabajo Prctico Nro. 1 - Ejercicio 5
 
     Integrantes:
                 Arana, Juan Pablo        33904497
                 Gonzalez, Mauro Daniel   35368160
-                Sapaya, Nicolás Martín   38319489
+                Sapaya, Nicols Martn   38319489
 
-    Instancia de Entrega: Entrega
+    Instancia de Entrega: 1er Re Entrega
 
 #>
     
@@ -126,13 +126,28 @@ switch ($PSCmdlet.ParameterSetName) {
         foreach ($item in $procesos) {
             #por cada proceso encontrado se loguea su nombre y ID
 
-            $process = $item.proceso.name
             $name = $item.name
             $processId = $item.proceso.ID
+            
+            #Se valida los casos donde hay mas de una instancia del proceso.
+            if($item.process.Count -ne 1){
+                $process = $item.proceso[0].name
+                $memoryUse = 0 
+
+                foreach($p in $item.process){
+                    $memoryUse += $item.proceso.WorkingSet 
+                }
+
+            }else{
+                $process = $item.proceso.name
+                #Se obtiene la cantidad de memoria utizada por el proceso
+                $memoryUse = $item.proceso.WorkingSet 
+
+            }
 
             try {
                 #Se obtiene el porcentaje de tiempo de uso del procesador
-                $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" -EV errorGet -EA stop | % { $_.countersamples.cookedvalue }
+                $processorUse = Get-Counter -Counter "\proceso($process)\% de tiempo de procesador" -EV errorGet -EA stop | % { $_.countersamples.cookedvalue }
             }
             catch [System.Exception] {
                 #Se capturan los errores en caso de suceder, se informa de ello en el archivo de logs
@@ -141,19 +156,20 @@ switch ($PSCmdlet.ParameterSetName) {
                 Write-Output $errorGet | Out-Null
             }            
             
-            #Se obtiene la cantidad de memoria utizada por el proceso
-            $memoryUse = $item.proceso.WorkingSet 
 
             #Se calcula el uso del procesador en base a la cantidad de procesadores
             [decimal]$realUseCPU = $processorUse / $numberOfProcessors
+            $realUseCPU = [math]::Round($realUseCPU,3)
+
             #Se calcula el uso de la memoria en base a la cantidad total disponible
             [decimal]$realUseMemory = $memoryUse / $totalMemory
+            $realUseMemory = [math]::Round($realUseMemory,3)
 
             Write-Output "------------------------------------------"
             Write-Output "Proceso: $name"
             Write-Output "Pid: $processId"
-            Write-Output "Uso de CPU: $realUseCPU"
-            Write-Output "Uso de Memoria: $realUseMemory"
+            Write-Output "Uso de CPU: $realUseCPU%"
+            Write-Output "Uso de Memoria: $realUseMemory%"
             
             Write-Output "------------------------------------------"
 
@@ -163,10 +179,16 @@ switch ($PSCmdlet.ParameterSetName) {
         foreach ($item in $procesos) {
             #por cada proceso encontrado se loguea su nombre y ID
 
-            $process = $item.proceso.name
             $name = $item.name
             $processId = $item.proceso.ID
             
+            #Se valida los casos donde hay mas de una instancia del proceso.
+            if($item.process.Count -ne 1){
+                $process = $item.proceso[0].name
+            }else{
+                $process = $item.proceso.name
+            }            
+
             try {
                 #Se obtiene el porcentaje de tiempo de uso del procesador
                 $processorUse = Get-Counter "\proceso($process)\% de tiempo de procesador" -EV errorGet -EA stop | % { $_.countersamples.cookedvalue }
@@ -180,11 +202,12 @@ switch ($PSCmdlet.ParameterSetName) {
 
             #Se calcula el uso del procesador en base a la cantidad de procesadores
             [decimal]$realUse = $processorUse / $numberOfProcessors
+            $realUse = [math]::Round($realUse,3)
 
             Write-Output "------------------------------------------"
             Write-Output "Proceso: $name"
             Write-Output "Pid: $processId"
-            Write-Output "Uso de CPU: $realUse"
+            Write-Output "Uso de CPU: $realUse%"
             
             Write-Output "------------------------------------------"
 
