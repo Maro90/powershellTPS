@@ -11,7 +11,7 @@ fi
 file -i "$1" | grep text/plain >> /dev/null
 if [ $? != 0 ]
 then
-    echo "El archivo esta vacio"
+    echo "Formato de archivo es invalido"
     exit 
 fi
 cp $1 $1.bak
@@ -37,5 +37,10 @@ mv $ARCH1 $1
 # $! que devuelve el pid del ultimo comando ejecutado en segundo plano
 # $- que devuelve la lista de opciones en la shell actual
 
+#4 - El objetivo del script es dejar la primer letra de cada linea en mayuscula y el resto en minuscula
 
+#5 - Sed es un editor de texto que reemplaza segun la expresion en sus parametros.
+#    - i edita el archivo sin imprimirlo en la salida estandar
 
+#6 - El script no funciona si el archivo tiene espacios ya que seria tomado como varios parametros.
+# para solucionarlo podrian agregarse comillas 
