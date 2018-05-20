@@ -52,6 +52,26 @@ if test $1 == "-h" || test $1 == "--help" || test $1 == "-?"; then
 fi
 
 
+CalcularTimestamp(){
+    clockParts=(${1//:/ })
+    horas=${clockParts[0]}
+    minutos=${clockParts[1]}
+    segundos=${clockParts[2]}
+    horasASegundos=`expr $horas \* 60 \* 60`
+    minutosASegundos=`expr $minutos \* 60`
+    let "segundosTotales=$horasASegundos + $minutosASegundos + $segundos"
+    echo "$segundosTotales"
+}
+
+ObtenerHorasDesdeTimeStamp(){
+    let "horas= $1 / 60 / 60"
+    let "minutosRestantes= $1 / 60"
+    minutos=`expr $minutosRestantes - $horas \* 60`
+    echo "$horas:$minutos"
+}
+
+
+
 ImprimirLegajo(){
     #echo -e "params $@ \n"
 
@@ -63,7 +83,15 @@ ImprimirLegajo(){
     do
         registro=(${info//;/ })
         if test $legajo == ${registro[0]}; then
-            echo -e "${registro[0]} \t${registro[1]}  \t\t${registro[2]}  \t\t${registro[3]}"
+
+            dia=${registro[1]}
+            timeEntrada=`CalcularTimestamp ${registro[2]}`
+            timeSalida=`CalcularTimestamp ${registro[3]}`
+
+            let "segundosTrabajados = $timeSalida - $timeEntrada"
+            horasTrabajadas=`ObtenerHorasDesdeTimeStamp $segundosTrabajados`
+            
+            echo -e "${registro[0]} \t${registro[1]}  \t\t${registro[2]}  \t\t${registro[3]} \t\t$horasTrabajadas"
         fi
     done
     return  
