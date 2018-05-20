@@ -53,26 +53,21 @@ fi
 
 
 ImprimirLegajo(){
-    echo -e "params $@ \n"
+    #echo -e "params $@ \n"
 
     legajo=$1
     shift
 
     echo -e "Legajo \tFecha \t\tIngreso \t\tEgreso \t\tHoras Trabajadas"
-    for datos in $@;
+    for info in $@;
     do
-        registro=(${datos//;/ })
+        registro=(${info//;/ })
         if test $legajo == ${registro[0]}; then
             echo -e "${registro[0]} \t${registro[1]}  \t\t${registro[2]}  \t\t${registro[3]}"
         fi
-    done    
+    done
+    return  
 }
-
-
-
-
-
-
 
 
 
@@ -111,18 +106,11 @@ if (test -r $1 && test -s $1); then
         fi
     done
 
-
-    for legajo in ${legajos[*]};
+    for legajoId in ${legajos[*]};
     do
-        echo -e "params ${datos[*]} \n"
-
-        #TODO:  revisar que la segunda vez llega mal
-
-        ImprimirLegajo $legajo ${datos[*]}
+        ImprimirLegajo $legajoId ${datos[*]}
         echo -e "\n"
-
     done
-
 
 else
     #Archivo Inexistente o No se puede leer
