@@ -51,19 +51,77 @@ if test $1 == "-h" || test $1 == "--help" || test $1 == "-?"; then
 	ErrorSintaxOHelp 0
 fi
 
+
+ImprimirLegajo(){
+    echo -e "params $@ \n"
+
+    legajo=$1
+    shift
+
+    echo -e "Legajo \tFecha \t\tIngreso \t\tEgreso \t\tHoras Trabajadas"
+    for datos in $@;
+    do
+        registro=(${datos//;/ })
+        if test $legajo == ${registro[0]}; then
+            echo -e "${registro[0]} \t${registro[1]}  \t\t${registro[2]}  \t\t${registro[3]}"
+        fi
+    done    
+}
+
+
+
+
+
+
+
+
+
 if (test -r $1 && test -s $1); then
+    #Siempre debe ser -r o -l los parametros
+    if test $2 != "-r" && test $2 != "-l"; then
+        ErrorSintaxOHelp 1
+    fi
+
+    
     linea=0
+    countLegajos=0
     for line in $(cat $1); 
     do
         if test $line != "Legajo;dia;ingreso;egreso";then
-            #No consideramos esta linea en caso de esta
+            #No consideramos esta linea en caso de estar
+
+            registro=(${line//;/ })
+            datos[linea]=$line
+            newOne=true
+
+            #Se arma listado de legajos
+            for ((i=0;i<countLegajos;i++))
+            do
+                #si ya existe el legajo no lo agrega
+                if (test ${legajos[$i]} == ${registro[0]});then
+                    newOne=false
+                fi
+            done
+            if $newOne; then
+                legajos[$countLegajos]=${registro[0]}
+                countLegajos=$((countLegajos+1))
+            fi
 
             linea=$((linea+1))
         fi
     done
 
-    echo ${registros[*]}
 
+    for legajo in ${legajos[*]};
+    do
+        echo -e "params ${datos[*]} \n"
+
+        #TODO:  revisar que la segunda vez llega mal
+
+        ImprimirLegajo $legajo ${datos[*]}
+        echo -e "\n"
+
+    done
 
 
 else
