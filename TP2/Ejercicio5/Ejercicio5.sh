@@ -54,6 +54,7 @@ ErrorVacioInex() {
 
 signal_SIGUSR1(){
     echo "Señal SIGUSR1"
+    echo $PATH_ENTRADA          #Se debe agregar al ~/.bash_profile 
 }
 
 signal_SIGUSR2(){
