@@ -52,19 +52,6 @@ ErrorVacioInex() {
 	exit	
 }
 
-signal_SIGUSR1(){
-    echo "Señal SIGUSR1"
-    echo $PATH_ENTRADA          #Se debe agregar al ~/.bash_profile 
-}
-
-signal_SIGUSR2(){
-    echo "Señal SIGUSR2"
-}
-
-signal_SIGTERM(){
-    echo "Señal SIGTERM"
-    exit
-}
 
 #***********************************************************************************************
 #***********************************************************************************************
@@ -85,21 +72,11 @@ fi
 #   
 #   Para enviarselas al proceso   "kill -s SIGUSR1 [PID]  -> se busca con  ps "
 #
-trap signal_SIGUSR1 SIGUSR1
-trap signal_SIGUSR2 SIGUSR2
 
-#Señal para terminar
-trap signal_SIGTERM SIGTERM
+process=$(ps)
+if echo $process | grep -q "./demonio.sh"; then
+  	echo "Ya hay corriendo un demonio de este proceso. Intentalo despues que finalice.";
+else
+	nohup ./demonio.sh $1 > /dev/null 2>&1 & echo "Demonio con el Pid: $!"
+fi
 
-#ignorando las siguientes señales
-trap "" SIGHUP
-trap "" SIGINT
-trap "" SIGQUIT
-trap "" SIGABRT
-trap "" SIGALRM
-
-echo "Mi pid es: $$" 
-while true
-do
-  echo "Soy un bucle" >>  /dev/null
-done
