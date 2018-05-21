@@ -1,9 +1,27 @@
 #!/bin/bash
 
+#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 2 - Ejericio 3			#
+#		Nombre del Script: Ejercicio3.sh		#
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################
+
 #borra archivo
 #rm ./a.txt
-#convierte MAYUS a MINUS
-#tr '[:upper:]' '[:lower:]' < ./archivob.txt
+
+# FALTA
+# RUTAS RELATIVAS
+# REEMPLAZAR ESPACIO POR "\ "  EN LOS PARAMETROS (LO DE ABAJO DEBERIA FUNCIONAR)
+# echo "${scriptdir//' '/'\ '}"
+
 
 #Funcion si se ingresaro parametros incorrectos.
 ErrorSintaxOHelp() { 
@@ -69,7 +87,6 @@ if test $1 != "-h" && test $1 != "-help" && test $1 != "-?"; then
 		if test $# -ne 2; then
 			#Me fijo si ingreso -i para case sensitive
 			if test $3 = "-i"; then
-				echo 'No es Case Sensitive'
 				sensitive=$3
 			else
 				ErrorSintaxOHelp 1
@@ -108,8 +125,13 @@ noWords=$(cat $archivoBusco | wc -w)
 #Tambien cuento las palabras que no estan en archivoA
 for item in ${wordsA[*]}
 do
-	#grep -c $item ./archivob.txt cuenta las ocurrencias de $item
-	ocurrencias[$count1]=$(grep -c $item ./archivob.txt)
+	# -o print only matched (non-empty) partos of matching lines
+	# wc -w cuenta las palabras
+	if test "$sensitive" = "-i"; then
+		ocurrencias[$count1]=$(tr '[:upper:]' '[:lower:]' < $archivoBusco | grep -o $item $_ | wc -w)
+	else
+		ocurrencias[$count1]=$(grep -o $item $archivoBusco | wc -w)
+	fi
 	let noWords=noWords-ocurrencias[$count1]
 	((count1++))	
 done
@@ -124,7 +146,7 @@ do
 	echo ${wordsA[$i]}':' ${ocurrencias[$i]}
 	((i++))
 done
-echo 'No existen en A:' $noWords
+echo "No existen en $archivoPalabras:" $noWords
 
 # restore stdin from filedescriptor 10
 # and close filedescriptor 10
