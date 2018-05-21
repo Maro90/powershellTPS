@@ -52,6 +52,19 @@ ErrorVacioInex() {
 	exit	
 }
 
+signal_SIGUSR1(){
+    echo "Señal SIGUSR1"
+}
+
+signal_SIGUSR2(){
+    echo "Señal SIGUSR2"
+}
+
+signal_SIGTERM(){
+    echo "Señal SIGTERM"
+    exit
+}
+
 #***********************************************************************************************
 #***********************************************************************************************
 
@@ -63,6 +76,29 @@ fi
 
 #Si no es ayuda, se comprueba que la cantidad de parámetros sea válida
 #Se comprueba que la cantidad de parametros este entre 1 y 3
-if (test $# -lt 2 || test $# -gt 3); then 	
+if (test $# != 1); then 	
 	ErrorSintaxOHelp 1
 fi
+
+#Capturo las señales SIGUSR1 y SIGUSR2
+#   
+#   Para enviarselas al proceso   "kill -s SIGUSR1 [PID]  -> se busca con  ps "
+#
+trap signal_SIGUSR1 SIGUSR1
+trap signal_SIGUSR2 SIGUSR2
+
+#Señal para terminar
+trap signal_SIGTERM SIGTERM
+
+#ignorando las siguientes señales
+trap "" SIGHUP
+trap "" SIGINT
+trap "" SIGQUIT
+trap "" SIGABRT
+trap "" SIGALRM
+
+echo "Mi pid es: $$" 
+while true
+do
+  echo "Soy un bucle" >>  /dev/null
+done
