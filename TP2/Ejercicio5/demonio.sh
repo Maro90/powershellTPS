@@ -1,14 +1,19 @@
-signal_SIGUSR1(){
-    echo "Señal SIGUSR1"
-    
-    directorioAComprimir=${PATH_ENTRADA}
-    filenameParts=(${directorioAComprimir//_/ })
+signal_SIGUSR1(){    
+    directory=`echo $PATH_ENTRADA | grep -o '[^/]*$'`
 
-    zip ${PATH_SALIDA}/ ${PATH_ENTRADA}/*
+    DIA=`date +"%d%m%Y"`
+    HORA=`date +"%H%M"`
+    DATE=`date +"%d%m%Y %H%M"`
+
+    fileName="$directory$DIA$HORA"
+    zipfile="${PATH_SALIDA}$fileName.zip"
+
+    count=`zip $zipfile ${PATH_ENTRADA}/* | wc -l`
+    echo "Se comprimieron $count archivos el $DATE" >> logFile
+    
 }
 
 signal_SIGUSR2(){
-    echo "Señal SIGUSR2"
     echo ${PATH_SALIDA} > ./midoc.txt        #Se debe agregar al ~/.bash_profile 
 }
 
@@ -33,6 +38,8 @@ trap signal_SIGTERM SIGTERM
 #trap "" SIGQUIT
 #trap "" SIGABRT
 #trap "" SIGALRM
+
+logFile=$1
 
 while true
 do

@@ -77,6 +77,10 @@ process=$(ps)
 if echo $process | grep -q "./demonio.sh"; then
   	echo "Ya hay corriendo un demonio de este proceso. Intentalo despues que finalice.";
 else
+
+	if [ ! -e $1 ]; then	#no existe el archivo
+		touch $1
+	fi
 	nohup ./demonio.sh $1 > /dev/null 2>&1 & echo "Demonio con el Pid: $!"
 fi
 
