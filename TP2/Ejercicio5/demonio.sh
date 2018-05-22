@@ -1,6 +1,10 @@
 signal_SIGUSR1(){
     echo "Señal SIGUSR1"
-    echo ${PATH_ENTRADA} > ./midoc.txt 
+    
+    directorioAComprimir=${PATH_ENTRADA}
+    filenameParts=(${directorioAComprimir//_/ })
+
+    zip ${PATH_SALIDA}/ ${PATH_ENTRADA}/*
 }
 
 signal_SIGUSR2(){
