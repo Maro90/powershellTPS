@@ -2,7 +2,7 @@ signal_SIGUSR1(){
     echo "---------------------------------------------------------------------" >> "$logFile"
     echo "" >> "$logFile"
 
-    directory=`echo "$PATH_ENTRADA" | grep -o '[^/]*$'`
+    directory=`echo $PATH_ENTRADA | grep -o '[^/]*$'`
 
     DIA=`date +"%d%m%Y"`
     HORA=`date +"%H%M"`
@@ -11,10 +11,10 @@ signal_SIGUSR1(){
     fileName="$directory$DIA$HORA"
     zipfile="${PATH_SALIDA}/$fileName.zip"
 
-    count=`zip "$zipfile" ${PATH_ENTRADA}/* | wc -l`
-    echo "Se comprimieron $count archivos el $DATE" >> "$logFile"
+    count=`zip $zipfile ${PATH_ENTRADA}/* | wc -l`
+    echo "Se comprimieron $count archivos el $DATE" >> $logFile
 
-    du -k "$zipfile" | awk '
+    du -k $zipfile | awk '
     BEGIN {
         suma=0
     }
@@ -24,7 +24,7 @@ signal_SIGUSR1(){
     }
     END {
         print "“El tamaño del archivo comprimido es "suma "kb";
-    }' >> "$logFile"
+    }' >> $logFile
     
 }
 
@@ -35,7 +35,7 @@ signal_SIGUSR2(){
     outputPath="${PATH_SALIDA}/*"
 
     DATE=`date +"%H:%M %d/%m/%Y"`
-    du -k "$outputPath" | awk '
+    du -k $outputPath | awk '
         BEGIN {
             suma=0
             cant=0
@@ -46,9 +46,9 @@ signal_SIGUSR2(){
         }
         END {
             print "Se eliminaron "cant " archivos y se liberaron "suma " kb";
-        }' >> "$logFile"
-    echo "A las $DATE" >> "$logFile"
-    rm -fR "$outputPath"
+        }' >> $logFile
+    echo "A las $DATE" >> $logFile
+    rm -fR $outputPath
 }
 
 signal_SIGTERM(){
@@ -77,5 +77,5 @@ logFile="$1"
 
 while true
 do
-    sleep 15s # Waits 15 seconds
+    sleep 1s # Waits 1 second
 done
