@@ -14,6 +14,8 @@
 #												#
 #################################################
 
+# NOTA: EL TIEMPO DE EJECUCIÓN DEL SCRIPT VARIA SEGÚN LA CANTIDAD DE DIRECTORIOS QUE POSEA.
+
 FOLDER_NAME=""
 FILECOUNT=0
 SIZE=0
@@ -83,4 +85,4 @@ elif [ "$1" = "-?" ]; then
 fi
 
 echo "FOLDER		COUNT		SIZE[KB]"
-ls -LRl $1 | ( while read -r line; do parseLine "$line"; done; print) | sort -k3 --numeric-sort | head -n 10
+ls -LRl $1 | ( while read -r line; do parseLine "$line"; done; print) | sort -t$'\t' -k3 -n -r | head -n 10
