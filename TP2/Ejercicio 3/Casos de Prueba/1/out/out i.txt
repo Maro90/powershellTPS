@@ -1,0 +1,4 @@
+argentina: 2
+uruguay: 4
+mundial: 2
+No existen en Casos de Prueba/1/in/archivoa.txt: 1

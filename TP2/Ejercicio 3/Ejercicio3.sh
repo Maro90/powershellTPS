@@ -14,45 +14,28 @@
 #												#
 #################################################
 
-#borra archivo
-#rm ./a.txt
-
-# FALTA
-# RUTAS RELATIVAS
-# REEMPLAZAR ESPACIO POR "\ "  EN LOS PARAMETROS (LO DE ABAJO DEBERIA FUNCIONAR)
-# echo "${scriptdir//' '/'\ '}"
-
-
-#Funcion si se ingresaro parametros incorrectos.
+#	Funcion si se ingresaro parametros incorrectos.
 ErrorSintaxOHelp() { 
 	clear
-
-	#Si $1 es 1, entonces es error de sintaxis
+	#	Si $1 es 1, entonces es error de sintaxis
 	if test $1 != 0; then
 		echo 'Error. La sintaxis del script es la siguiente:'
 	else
 		echo 'Help:'
 		echo "La sintaxis del script es la siguiente:"
 	fi
-
-	echo "$0 [Archivo][Archivo]"
-	
+	echo "$0 [Archivo][Archivo]"	
 	echo "$0 [Archivo][Archivo][-i]"
-
 	echo 'Para ayuda:'
-
-	echo "$0 [-h]"
-	
-	echo "$0 [-?]"
-
-	echo "$0 [-help]"
-	
+	echo "$0 -h"
+	echo "$0 -?"
+	echo "$0 -help"
 	exit	
 }
 
+#	Funcion si los archivos son vacios o inexistentes.
 ErrorVacioInex() { 
 	clear
-
 	if [ -e $1 ]; then
 		if [ ! -s $1 ]; then
 			echo "$1 es vacio."
@@ -68,24 +51,50 @@ ErrorVacioInex() {
 	else
 		echo "$2 no existe."
 	fi
-
 	exit	
 }
 
-#Se comprueba que la cantidad de parametros este entre 1 y 3
+#	Se comprueba que la cantidad de parametros este entre 1 y 3
 if (test $# -lt 1 || test $# -gt 3); then 	
 	ErrorSintaxOHelp 1
 fi
 
-if test $1 != "-h" && test $1 != "-help" && test $1 != "-?"; then 
-	#No es ayuda, entonces es archivo
-	if test -e $1 && test -s $1 && test -e $2 && test -s $2; then
-		#Los archivos existen y los asigno a una variable
-		archivoPalabras=$1
-		archivoBusco=$2
-		#Si son 3 parametros pregunto por el -i
+#	Es ayuda ?
+if [ "$1" = "-h" ]; then
+	ErrorSintaxOHelp 0
+elif [ "$1" = "-help" ]; then
+	ErrorSintaxOHelp 0
+elif [ "$1" = "-?" ]; then
+	ErrorSintaxOHelp 0
+fi
+
+if test $# -gt 1; then
+	#	No es ayuda, entonces es archivo
+	if test -e "$PWD/$1"; then
+	 	if test -s "$PWD/$1"; then
+	 		#	Los archivos existen y los asigno a una variable
+	 		archivoPalabras="$PWD/$1"
+	 	else
+	 		#	Archivo Inexistente o Vacio
+			ErrorVacioInex "$PWD/$1" "$PWD/$2"
+		fi
+
+		if test -e "$PWD/$2"; then
+			if test -s "$PWD/$2"; then
+				#	Los archivos existen y los asigno a una variable
+				archivoBusco="$PWD/$2"
+			else
+				#	Archivo Inexistente o Vacio
+				ErrorVacioInex "$PWD/$1" "$PWD/$2"
+			fi
+		else
+	 		#	Archivo Inexistente o Vacio
+			ErrorVacioInex "$PWD/$1" "$PWD/$2"
+		fi
+
+		#	Si son 3 parametros pregunto por el -i
 		if test $# -ne 2; then
-			#Me fijo si ingreso -i para case sensitive
+			#	Me fijo si ingreso -i para case sensitive
 			if test $3 = "-i"; then
 				sensitive=$3
 			else
@@ -93,61 +102,51 @@ if test $1 != "-h" && test $1 != "-help" && test $1 != "-?"; then
 			fi
 		fi
 	else
-		#Archivo Inexistente o Vacio
-		ErrorVacioInex $1 $2
+		#	Archivo Inexistente o Vacio
+		ErrorVacioInex "$PWD/$1" "$PWD/$2"
 	fi
 else
-	#Es -h -help o -?
-	ErrorSintaxOHelp 0
+	#	Es ayuda
+	ErrorSintaxOHelp 1
 fi
 
-# Link filedescriptor 10 with stdin
-exec 10<&0
-# stdin replaced with a file supplied as a first argument
-
-exec < $archivoPalabras
 let count=0
 
-#Guardo las palabras de archivoa.txt en un array
-while read word; do
-
-    wordsA[$count]=$word
+for line in $(cat "$archivoPalabras"); do
+	wordsA[$count]=$line
     ((count++))
 done
 
-#Inicializo count1 para iterar
+#	Inicializo count1 para iterar
 #	noWords tiene la cantidad total de palabras en archivob.txt
 let count1=0
 
-noWords=$(cat $archivoBusco | wc -w)
+noWords=$(cat "$archivoBusco" | wc -w)
 
-#Itero para contar las coincidencias
-#Tambien cuento las palabras que no estan en archivoA
+#	Itero para contar las coincidencias
+#	Tambien cuento las palabras que no estan en archivoA
 for item in ${wordsA[*]}
 do
-	# -o print only matched (non-empty) partos of matching lines
-	# wc -w cuenta las palabras
+	#   -o print only matched (non-empty) partos of matching lines
+	#	wc -w cuenta las palabras
 	if test "$sensitive" = "-i"; then
-		ocurrencias[$count1]=$(tr '[:upper:]' '[:lower:]' < $archivoBusco | grep -o $item $_ | wc -w)
+		ocurrencias[$count1]=$(tr '[:upper:]' '[:lower:]' < "$archivoBusco" | grep -o $item $_ | wc -w)
 	else
-		ocurrencias[$count1]=$(grep -o $item $archivoBusco | wc -w)
+		ocurrencias[$count1]=$(grep -o $item "$archivoBusco" | wc -w)
 	fi
 	let noWords=noWords-ocurrencias[$count1]
 	((count1++))	
 done
 
-# maxCant = cantidad palabras en archivoa.txt
+#	maxCant = cantidad palabras en parametro 1
 maxCant=${#wordsA[*]}
 i=0
 
-#Imprimo el resultado final
+#	Imprimo el resultado final
 while [ $i -ne $maxCant ]
 do
 	echo ${wordsA[$i]}':' ${ocurrencias[$i]}
 	((i++))
 done
-echo "No existen en $archivoPalabras:" $noWords
 
-# restore stdin from filedescriptor 10
-# and close filedescriptor 10
-exec 0<&10 10<&-
+echo "No existen en $1:" $noWords

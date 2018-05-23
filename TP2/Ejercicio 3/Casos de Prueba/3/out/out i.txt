@@ -1,0 +1,3 @@
+rojo: 4
+azul: 3
+No existen en Casos de Prueba/2/in/archivoa.txt: 2
