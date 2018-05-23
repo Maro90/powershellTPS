@@ -1,38 +1,39 @@
 #!/bin/bash
 
-#############################################
-#    	    Sistemas Operativos		        #	
-#     Trabajo Practico 2 - Ejercicio 5	    #
-#		Integrantes:		                #
-#      Arana, Juan Pablo        33904497    #
-#      Gonzalez, Mauro Daniel   35368160    #
-#      Sapaya, Nicolás Martín   38319489    #
-#                                           #
-#       Instancia de Entrega: Entrega       #
-#				                            #
-#############################################
+#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 2 - Ejericio 5			#
+#		Nombre del Script: Ejercicio5.sh		#
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################
 
 #***********************************************************************************************
 
 #Funcion si se ingreso parametros incorrectos.
 
 ErrorSintaxOHelp() { 
-	#clear
+	clear
 	#Si $1 es 1, entonces es error de sintaxis
 	if test $1 != 0; then
 		echo 'Error. La sintaxis del script es la siguiente:'
+        echo 'Para ayuda:'
+        echo "$0 [-h]"
+        echo "$0 [-?]"
+        echo "$0 [--help]"
+        echo "--------------------------------------"
 	else
 		echo 'Help:'
 		echo "La sintaxis del script es la siguiente:"
 	fi
 	
-    echo "$0 [Archivo] -r"
-	echo "$0 [Archivo] -r -p"
-	echo "$0 [Archivo] -l [Legajo]"
-	echo 'Para ayuda:'
-	echo "$0 [-h]"
-	echo "$0 [-?]"
-	echo "$0 [--help]"
+    echo "$0 [Archivo .log]"
 	exit	
 }
 
@@ -57,7 +58,7 @@ ErrorVacioInex() {
 #***********************************************************************************************
 
 #Se comprueba que haya solicitado ayuda
-if test $1 == "-h" || test $1 == "--help" || test $1 == "-?"; then 
+if test "$1" = "-h" || test "$1" = "--help" || test "$1" = "-?"; then 
 	#Es -h -help o -?
 	ErrorSintaxOHelp 0
 fi
@@ -78,8 +79,8 @@ if echo $process | grep -q "./demonio.sh"; then
   	echo "Ya hay corriendo un demonio de este proceso. Intentalo despues que finalice.";
 else
 
-	if [ ! -e $1 ]; then	#no existe el archivo
-		touch $1
+	if [ ! -e "$1" ]; then	#no existe el archivo
+		touch "$1"
 	fi
 	nohup ./demonio.sh $1 > /dev/null 2>&1 & echo "Demonio con el Pid: $!"
 fi
