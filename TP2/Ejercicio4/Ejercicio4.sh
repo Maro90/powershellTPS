@@ -1,26 +1,33 @@
 #!/bin/bash
 
-#############################################
-#    	    Sistemas Operativos		        #	
-#     Trabajo Practico 2 - Ejercicio 4	    #
-#		Integrantes:		                #
-#      Arana, Juan Pablo        33904497    #
-#      Gonzalez, Mauro Daniel   35368160    #
-#      Sapaya, Nicolás Martín   38319489    #
-#                                           #
-#       Instancia de Entrega: Entrega       #
-#				                            #
-#############################################
+#################################################
+#             Sistemas Operativos               #
+#       Trabajo Práctico 2 - Ejericio 4         #
+#       Nombre del Script: Ejercicio4.sh        #
+#                                               #
+#               Integrantes:                    #
+#       Arana, Juan Pablo       33904497        #
+#       Gonzalez, Mauro Daniel  35368160        #
+#       Sapaya, Nicolás Martín  38319489        #
+#                                               #
+#       Instancia de Entrega: Entrega           #
+#                                               #
+#################################################
 
 #***********************************************************************************************
 
 #Funcion si se ingreso parametros incorrectos.
 
 ErrorSintaxOHelp() { 
-	#clear
+	clear
 	#Si $1 es 1, entonces es error de sintaxis
 	if test $1 != 0; then
 		echo 'Error. La sintaxis del script es la siguiente:'
+        echo 'Para ayuda:'
+        echo "$0 [-h]"
+        echo "$0 [-?]"
+        echo "$0 [--help]"
+        echo "--------------------------------------"
 	else
 		echo 'Help:'
 		echo "La sintaxis del script es la siguiente:"
@@ -29,10 +36,7 @@ ErrorSintaxOHelp() {
     echo "$0 [Archivo] -r"
 	echo "$0 [Archivo] -r -p"
 	echo "$0 [Archivo] -l [Legajo]"
-	echo 'Para ayuda:'
-	echo "$0 [-h]"
-	echo "$0 [-?]"
-	echo "$0 [--help]"
+
 	exit	
 }
 
@@ -42,11 +46,11 @@ ErrorSintaxOHelp() {
 
 ErrorVacioInex() { 
 	clear
-	if [ ! -e $1 ]; then
+	if [ ! -e "$1" ]; then
         echo "'$1' no existe."
-	elif [ ! -r $1 ]; then
+	elif [ ! -r "$1" ]; then
 		echo "No tiene permisos de lectura para '$1'."
-	elif [ ! -s $1 ]; then
+	elif [ ! -s "$1" ]; then
 		echo "'$1' es vacio."
 	fi
 	exit	
@@ -118,8 +122,8 @@ EvaluarRegistrosDelLegajo(){
     tiempoTotalTrabajado=0
     #cargo archivo con la cabecera
     if $generarArchivos;then          
-        echo -e "Legajo \t\tFecha \t\t\tIngreso \tEgreso \t\tHoras Trabajadas" > $regisFile
-        echo "" >> $regisFile
+        echo -e "Legajo \t\tFecha \t\t\tIngreso \tEgreso \t\tHoras Trabajadas" > "$regisFile"
+        echo "" >> "$regisFile"
     fi
 
     for info in $@;
@@ -139,13 +143,13 @@ EvaluarRegistrosDelLegajo(){
             let "tiempoTotalTrabajado=$tiempoTotalTrabajado + $segundosTrabajados"
             if $generarArchivos;then         
                 #cargo archivo con los datos de los registros 
-                echo -e "${registro[0]} \t\t$dia/$mes/$ano  \t${registro[2]}  \t${registro[3]} \t\t$tiempoTrabajado" >> $regisFile
+                echo -e "${registro[0]} \t\t$dia/$mes/$ano  \t${registro[2]}  \t${registro[3]} \t\t$tiempoTrabajado" >> "$regisFile"
             fi
         fi
     done
                 
     if $generarArchivos;then          
-        echo "---------------------------------------------------------------------------------------------" >> $regisFile 
+        echo "---------------------------------------------------------------------------------------------" >> "$regisFile" 
     fi
     
     horasTeoricas=`expr 22 \* 8`
@@ -159,7 +163,7 @@ EvaluarRegistrosDelLegajo(){
     horasExtra=`ObtenerHorasDesdeTimeStamp $tiempoExtra`
     
     if $generarArchivos; then
-        ImprimirHorasTotales >>$regisFile
+        ImprimirHorasTotales >>"$regisFile"
     fi
     if $mostrarLegajosProcesados; then
         echo "Legajo: $legajo"
@@ -174,7 +178,7 @@ EvaluarRegistrosDelLegajo(){
 #***********************************************************************************************
 
 #Se comprueba que haya solicitado ayuda
-if test $1 == "-h" || test $1 == "--help" || test $1 == "-?"; then 
+if test "$1" = "-h" || test "$1" = "--help" || test "$1" = "-?"; then 
 	#Es -h -help o -?
 	ErrorSintaxOHelp 0
 fi
@@ -185,7 +189,7 @@ if (test $# -lt 2 || test $# -gt 3); then
 	ErrorSintaxOHelp 1
 fi
 
-if (test -r $1 && test -s $1); then
+if (test -r "$1" && test -s "$1"); then
 
     #Siempre debe ser -r o -l los parametros
     if test $2 != "-r" && test $2 != "-l"; then
@@ -197,17 +201,17 @@ if (test -r $1 && test -s $1); then
         ErrorSintaxOHelp 1
     fi
 
-    archivoDeRegistros=$1
+    archivoDeRegistros="$1"
     generarArchivos=true
     mostrarLegajosProcesados=false
 
     #Se carga la fecha
-    SetDate $1
+    SetDate "$1"
 
     #Se analiza el archivo y se extraen los datos
     linea=0
     countLegajos=0
-    for line in $(cat $1); 
+    for line in $(cat "$1"); 
     do
         if test $line != "Legajo;dia;ingreso;egreso";then
             #No consideramos esta linea en caso de estar
@@ -258,5 +262,5 @@ if (test -r $1 && test -s $1); then
     fi
 else
     #Archivo Inexistente o No se puede leer
-	ErrorVacioInex $1
+	ErrorVacioInex "$1"
 fi
