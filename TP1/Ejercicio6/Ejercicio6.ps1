@@ -24,7 +24,7 @@ Integrantes:
             Gonzalez, Mauro Daniel   35368160
             Sapaya, Nicolás Martín   38319489
 
-Instancia de Entrega: Primer Re Entrega
+Instancia de Entrega: Segunda Re Entrega
 #>
 
 Param([Parameter(Mandatory=$true)][string]$pathPalabras,
@@ -205,7 +205,12 @@ function mostrarPalabra{
 
     #Flag si escribio bien la palabra, elijo una palabra al azar de todas las que hay y la agrego al array, limpio la consola.
     $escribioBien = $true
-    $arrayWords.Add((Get-Random $allWords))
+    
+    if($allWords.count -ne 1){
+        $arrayWords.Add((Get-Random $allWords))
+    }else{
+        $arrayWords.Add($allWords)
+    }
     Clear-Host
 
     #Muestra la/s palabra/s (por un tiempo), a escribir, almacenadas en el array.
