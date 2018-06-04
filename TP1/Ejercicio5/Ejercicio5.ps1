@@ -99,7 +99,6 @@ function getproceso{
 #se genera array para trabajar con los procesos encontrados
 $procesos = @()
 
-
 foreach ($item in $texto) {
     #se buscan los procesos del documento
     $process = getproceso $item
@@ -116,8 +115,6 @@ foreach ($item in $texto) {
 
 #se obtine el numero de procesadores de la computadora
 $numberOfProcessors = (Get-WmiObject -Class Win32_Processor).NumberOfLogicalProcessors
-#se obtiene el total de memoria del sistema
-[decimal]$totalMemory = ((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory/ 1024) #in KB
 
 #se evalua la interaccion a lleva a cabo teniendo en cuenta el segundo parametro de tipo switch asociado a alguno de los grupos
 switch ($PSCmdlet.ParameterSetName) {
@@ -130,12 +127,12 @@ switch ($PSCmdlet.ParameterSetName) {
             $processId = $item.proceso.ID
             
             #Se valida los casos donde hay mas de una instancia del proceso.
-            if($item.process.Count -ne 1){
+            if($item.proceso.Count -ne 1){
                 $process = $item.proceso[0].name
                 $memoryUse = 0 
 
-                foreach($p in $item.process){
-                    $memoryUse += $item.proceso.WorkingSet 
+                foreach($p in $item.proceso){
+                    $memoryUse += $p.WorkingSet 
                 }
 
             }else{
@@ -161,15 +158,13 @@ switch ($PSCmdlet.ParameterSetName) {
             [decimal]$realUseCPU = $processorUse / $numberOfProcessors
             $realUseCPU = [math]::Round($realUseCPU,3)
 
-            #Se calcula el uso de la memoria en base a la cantidad total disponible
-            [decimal]$realUseMemory = $memoryUse / $totalMemory
-            $realUseMemory = [math]::Round($realUseMemory,3)
+            [decimal]$memoryUse = $memoryUse / 1024
 
             Write-Output "------------------------------------------"
             Write-Output "Proceso: $name"
             Write-Output "Pid: $processId"
             Write-Output "Uso de CPU: $realUseCPU%"
-            Write-Output "Uso de Memoria: $realUseMemory%"
+            Write-Output "Uso de Memoria: $realUseMemory KB"
             
             Write-Output "------------------------------------------"
 

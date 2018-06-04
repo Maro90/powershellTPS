@@ -1,3 +1,5 @@
 calc.exe
 notepad.exe
 winmine.exe
+firefox.exe
+chrome.exe
