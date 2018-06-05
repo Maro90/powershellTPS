@@ -159,6 +159,7 @@ switch ($PSCmdlet.ParameterSetName) {
             $realUseCPU = [math]::Round($realUseCPU,3)
 
             [decimal]$memoryUse = $memoryUse / 1024
+            $realUseMemory = [math]::Round($memoryUse,3)
 
             Write-Output "------------------------------------------"
             Write-Output "Proceso: $name"
