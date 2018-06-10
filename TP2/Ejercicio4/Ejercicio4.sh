@@ -108,7 +108,6 @@ ImprimirHorasTotales(){
 
 }
 
-
 #***********************************************************************************************
 
 #Funcion para realizar el calculo de horas trabajadas del legajo pasado por parámetro.
@@ -173,6 +172,26 @@ EvaluarRegistrosDelLegajo(){
 
     return  
 }
+#***********************************************************************************************
+
+#Funcion para validar la existencia de un legajo
+
+ValidarLegajo(){
+    legajo=$1
+    shift
+
+    for info in $@;
+    do
+        registro=(${info//;/ })
+        if test $legajo == ${registro[0]}; then
+            return
+        fi
+    done
+    #Legajo Inexistente
+	echo "El legajo solicitado no existe en los registros: $legajo"
+    exit
+}
+
 
 #***********************************************************************************************
 #***********************************************************************************************
@@ -188,18 +207,18 @@ fi
 if (test $# -lt 2 || test $# -gt 3); then 	
 	ErrorSintaxOHelp 1
 fi
+    
+#Siempre debe ser -r o -l los parametros
+if test $2 != "-r" && test $2 != "-l"; then
+    ErrorSintaxOHelp 1
+fi
+
+#Si pasa -l debe ingresar un legajo.
+if  test $2 == "-l" && test $# -lt 3;then
+    ErrorSintaxOHelp 1
+fi
 
 if (test -r "$1" && test -s "$1"); then
-
-    #Siempre debe ser -r o -l los parametros
-    if test $2 != "-r" && test $2 != "-l"; then
-        ErrorSintaxOHelp 1
-    fi
-
-    #Si pasa -l debe ingresar un legajo.
-    if  test $2 == "-l" && test $# -lt 3;then
-        ErrorSintaxOHelp 1
-    fi
 
     archivoDeRegistros="$1"
     generarArchivos=true
@@ -238,6 +257,7 @@ if (test -r "$1" && test -s "$1"); then
     done
 
     if test $2 == "-l";then
+        ValidarLegajo $3 ${datos[*]}
         generarArchivos=false
         mostrarLegajosProcesados=true
         EvaluarRegistrosDelLegajo $3 ${datos[*]}
