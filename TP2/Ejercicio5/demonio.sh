@@ -60,11 +60,11 @@ signal_SIGTERM(){
 #   
 #   Para enviarselas al proceso   "kill -s SIGUSR1 [PID]  -> se busca con  ps "
 #
-trap signal_SIGUSR1 SIGUSR1
-trap signal_SIGUSR2 SIGUSR2
+trap signal_SIGUSR1 USR1
+trap signal_SIGUSR2 USR2
 
 #Señal para terminar
-trap signal_SIGTERM SIGTERM
+trap signal_SIGTERM TERM
 
 #ignorando las siguientes señales
 #trap "" SIGHUP
