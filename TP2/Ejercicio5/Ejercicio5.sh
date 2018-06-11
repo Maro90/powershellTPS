@@ -80,7 +80,7 @@ if !(test -x "./demonio.sh"); then
 	exit
 fi
 
-process=$(ps -f) #Cambio para que funcione coreectamente en ubuntu
+process=$(ps -ef) #Cambio para que funcione coreectamente en ubuntu
 if echo $process | grep -q "./demonio.sh"; then
   	echo "Ya hay corriendo un demonio de este proceso. Intentalo despues que finalice.";
 else
