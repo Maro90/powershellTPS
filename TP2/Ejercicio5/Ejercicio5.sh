@@ -74,6 +74,12 @@ fi
 #   Para enviarselas al proceso   "kill -s SIGUSR1 [PID]  -> se busca con  ps "
 #
 
+#Se valida que el demonio pueda correrse, es decir que se tengan permisos de ejecución.
+if !(test -x "./demonio.sh"); then
+	echo "Debe darle permisos de ejecución al demonio"
+	exit
+fi
+
 process=$(ps)
 if echo $process | grep -q "./demonio.sh"; then
   	echo "Ya hay corriendo un demonio de este proceso. Intentalo despues que finalice.";
