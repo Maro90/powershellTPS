@@ -1,66 +1,99 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
-int main (void)
-{
-	char c[32];
-	printf("Presionar Enter para continuar con la ejecucion del progreso ... \n");
-
-	if(fork () )
-	{
-		if(fork () )
-		{
-			printf("Inicia Padre \t%d\n", getpid() );
-			fgets( c,32,stdin);
-			printf("Fin	Padre\t%d\n", getpid() );
-		}
-		else
-			if(fork() )
-			{
-				printf("Inicia Hijo2\t%d\n", getpid() );
-				fgets( c,32,stdin);
-				printf("Fin	Hijo2\t%d\n", getpid() );
-			}
-			else
-			{
-				printf("Inicia Bisnieto2\t%d\n", getpid() );
-				fgets( c,32,stdin);
-				printf("Fin	Bisnieto2\t%d\n", getpid() );
-			}
+char *tipo(int tipo_id){
+	switch(tipo_id){
+		case 1:
+			return "Hijo";
+		case 2:
+			return "Nieto";
+		case 3:
+			return "Bisnieto";
+		case -1:
+			return "Zombie";
+		case -2:
+			return "Demonio";
 	}
-		else
-			if(fork() )
-			{ 
-				printf("Inicia Hijo1 \t%d\n", getpid() );
-				fgets( c,32,stdin);
-				printf("Fin	Hijo1\t%d\n", getpid() );
+	return "Desconocido";
+}
+
+void mostar(pid_t pid_padre,int gen){
+	//printf("Padre: %d\tPID: %d\t GEN:%d\n", pid_padre, getpid(),gen);
+	printf("Soy el proceso con PID %d y pertenezco a la generación Nº %d Pid padre: %d Parentesco/Tipo: %s\n", getpid(),gen,pid_padre,tipo(gen));
+}
+
+void crear_zombies(int cant){
+	pid_t pid_padre = getpid();
+	
+	for(int i=0;i<cant;i++){
+		pid_t zombie = fork();	
+		if(!zombie){
+			mostar(pid_padre,-1);
+			exit(0);
+		}
+	}
+}
+
+void crear_demonios(int cant){
+	pid_t pid_padre = getpid();
+	
+	for(int i=0;i<cant;i++){
+		pid_t demonio = fork();	
+		if(!demonio){
+			mostar(pid_padre,-2);
+			setsid();
+		}
+	}
+}
+
+void crear_hijos(int gen, int gen_max ,int hijos_generacion [],int hijos_limite []){
+	pid_t pid_padre = getpid();
+
+	if(hijos_generacion[gen]>0 && hijos_limite[gen]>0){
+		hijos_generacion[gen]--;
+		hijos_limite[gen]--;
+
+		pid_t hijo = fork();
+		if(!hijo){ // es hijo
+			gen++;
+			mostar(pid_padre,gen);
+		}else{
+			int usage=1;
+			for(int i=1;gen+i<gen_max;i++){
+				usage *= hijos_limite[gen+i];
+				hijos_generacion[gen+i]-= usage;
 			}
-			else
-			{
-				printf("Inicia Bisnieto1\t%d\n", getpid() );
-				fgets( c,32,stdin);
-				printf("Fin	Bisnieto1\t%d\n", getpid() );
-			}
-	return 0;
+		}
+
+		if(gen<gen_max){
+			crear_hijos(gen, gen_max ,hijos_generacion, hijos_limite);
+		}else if(gen ==gen_max && hijos_generacion[gen_max-1]==0){
+			crear_zombies(hijos_generacion[gen_max]);
+			crear_demonios(hijos_generacion[gen_max+1]);
+		}		
+	}
 }
 
 
-/***********************************************************************************************
-a) Se generan 5 procesos. el numero que imprime es el pid de cada proceso, es el idenficador unico que tiene el proceso.
+int main (void)
+{
+	
+	printf("Presionar Enter para continuar con la ejecucion del progreso ... \n");
 
-c) Los procesos no necesariamente se crean y finalizan en el mismo orden, puede producirse un orden pero en otra ejecucion variar, esto se debe a que al crearse procesos diferentes estos pasan a competir por el procesador, y su finalizacion dependera del modo en que esta programado el planificador.
-
-d) Desde otra terminar utilizamos el comando "ps -fea" observamos que estan los 5 procesos creados. Ademas utilizamos el comando "ps -aux" y observamos que los 5 procesos se encuentran en estado "S" lo cual significa que se encuentran suspendidos. Esto implica que los procesos estan esperando algun tipo de evento para volver al estado de Running nuevamente.
-Al realizar el primer enter desaparece el primer proceso creado por el bash, al que llamamos padre, sus hijos,  cambian el ppid por el 1.
-al presionar nuevamente "enter" desaparece el segundo proceso, y sucede lo mismo que antes, su proceso hijo toma el ppid 1.
-al presionar nuevamente "enter" desaparece el tercer proceso, y sucede lo mismo que antes, su proceso hijo toma el ppid 1.
-al presionar nuevamente "enter" desaparece el cuarto proceso.
-al presionar nuevamente "enter" desaparece el quinto proceso.
+	// ultimas dos generaciones {zombies, demonios}
+	int hijos_generacion [5] = { 4, 7, 3, 5, 2};
+	int hijos_limite[3] = {4, 2, 2};
 
 
-*/
+	crear_hijos(0, 3, hijos_generacion,hijos_limite);
 
+	char c[32];
+	fgets( c,32,stdin);
+
+	return 0;
+}
 
 
 
