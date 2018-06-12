@@ -1,0 +1,50 @@
+P:¿Cuáles de estos equipos es de Primera división?
+R: Deportivo Merlo
+RC: Boca Juniors
+R: Real Madrid
+R: Chelsea
+P:¿Cuáles de estos equipos es de España?
+R: Deportivo Merlo
+R: Boca Juniors
+RC: Real Madrid
+R: Chelsea
+P:¿Cuáles de estos equipos es de Inglaterra?
+R: Deportivo Merlo
+R: Boca Juniors
+R: Real Madrid
+RC: Chelsea
+P:¿Cuáles de estos equipos es de Primera C?
+RC: Deportivo Merlo
+R: Boca Juniors
+R: Real Madrid
+R: Chelsea
+P:¿Cuáles de estos equipos descendió a la B Nacional?
+RC: River Plate
+R: Boca Juniors
+R: Real Madrid
+R: Chelsea
+P:¿Cuál es el jugador argentino que juega en el Manchester City?
+RC: Sergio Aguero
+R: Michael Owen
+R: Rodrigo Palacio
+R: Gonzalo Higuain
+P:¿Cuál es el jugador más conocido de Portugal?
+R: Nelson Semedo
+R: Nani
+RC: Cristiano Ronaldo
+R: Ricardo Quaresma
+P:¿Cuál es el máximo goleador de argentina?
+R: Hernán Crespo
+R: Gabriel Batistuta
+R: Sergio Aguero
+RC: Lionel Messi
+P:¿Quién de estos jugadores gano al menos un mundial?
+R: Angel DiMaria
+RC: Diego Armando Maradona
+R: Sergio Aguero
+R: Lionel Messi
+P:¿Cuál es la página de la catedra?
+R: www.so.com
+R: www.siso.com
+R: www.so.com.ar
+RC: www.sisop.com.ar
