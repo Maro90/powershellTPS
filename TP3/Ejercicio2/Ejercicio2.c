@@ -11,9 +11,34 @@
 #define ES_VOCAL(x) (tolower(x) == 97 || tolower(x) == 101 || tolower(x) == 105 || tolower(x) == 111 || tolower(x) == 118) ? 1 : 0
 
 // debería tener un array o algo donde voy guardando todos los archivos que manejo ese hilo
-void* analyze(char*);
+void    printfFiles(FILE*, struct tm*, int, struct tm*, int, int, int);
+void*   analyze(char*);
+int     countFiles();
 
-int main(int argc, char const *argv[]){
+int main(int argc, char *const argv[]){
+    int option;
+    int multiplicidad;
+    char pathIn[100];
+    char pathOut[100];
+
+    if(argc != 2 && argc != 4){
+        printf("Ingrese ./Ejercicio2.exe h para ayuda.\n");
+        exit(1);
+    }else if(argc == 2 && (strcmp(argv[1],"h") == 0)){
+        printf("La sintaxis es ./Ejercicio2.exe [pathEntrada] [pathSalida] [nivel paralelismo]\nFormato: [string] [string] [int]\n");
+        exit(1);
+    }else if((((int)*argv[3]) < 49) || (((int)*argv[3]) > 57)){ // compruebo que este entre 1 y 9
+        printf("[nivel paralelismo] debe ser un número entre 1 y 9\n");
+        exit(1);
+    }
+
+    // (((int)*argv[3])-48) es el parametro 3, que sería la multiplicidad
+    strcpy(pathIn, argv[1]);
+    strcpy(pathOut, argv[2]);
+    multiplicidad = (((int)*argv[3])-48);
+
+    printf("*%s* - *%s* - *%d*\n", pathIn, pathOut, multiplicidad);
+    
     pthread_t hilo1;
 
     pthread_create(&hilo1, NULL, analyze("texto1.txt"), NULL);
@@ -42,16 +67,18 @@ int countFiles(){
     }
 
     entry = readdir(dirp);
-    printf("%s\n", entry->d_name);
-    
-    while(!entry) {
+
+    while(entry != NULL) {
         if(entry->d_type == DT_REG){ /* If the entry is a regular file */
             file_count++;
+            printf("%s\n", entry->d_name);
         }
         entry = readdir(dirp);
     }
     closedir(dirp);
+    return(file_count);
 }
+
 void printFile(FILE* pf, struct tm* tInfo1, int pid, struct tm* tInfo2, int cVocales, int cConsonantes, int cCaracteres){
     fprintf(pf, "%d:%d:%d\n", tInfo1->tm_hour, tInfo1->tm_min, tInfo1->tm_sec);
     fprintf(pf, "PID: %d\n",pid);
