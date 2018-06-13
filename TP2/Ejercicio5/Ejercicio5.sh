@@ -19,7 +19,6 @@
 #Funcion si se ingreso parametros incorrectos.
 
 ErrorSintaxOHelp() { 
-	clear
 	#Si $1 es 1, entonces es error de sintaxis
 	if test $1 != 0; then
 		echo 'Error. La sintaxis del script es la siguiente:'
@@ -42,7 +41,6 @@ ErrorSintaxOHelp() {
 #Funcion si el archivo de registros no existe, no tiene permisos de lectura o esta vacío.
 
 ErrorVacioInex() { 
-	clear
 	if [ ! -e $1 ]; then
         echo "'$1' no existe."
 	elif [ ! -r $1 ]; then
