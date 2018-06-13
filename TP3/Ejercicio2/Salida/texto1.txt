@@ -1,5 +1,6 @@
-10:55:3
+13:9:48
+PID: 7802
 Vocales:20
 Consonantes:25
 Caracteres:22
-10:55:3
+13:9:48
