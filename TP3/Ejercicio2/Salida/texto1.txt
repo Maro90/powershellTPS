@@ -1,0 +1,5 @@
+10:55:3
+Vocales:20
+Consonantes:25
+Caracteres:22
+10:55:3
