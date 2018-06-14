@@ -1,19 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <time.h>
-#include <ctype.h>
-#include <string.h>
-#include <dirent.h>
-
-#define ES_LETRA(x) ((x > 64 && x < 91) || (x > 96 && x < 123)) ? 1 : 0
-#define ES_VOCAL(x) (tolower(x) == 97 || tolower(x) == 101 || tolower(x) == 105 || tolower(x) == 111 || tolower(x) == 118) ? 1 : 0
-
-// debería tener un array o algo donde voy guardando todos los archivos que manejo ese hilo
-void    printfFiles(FILE*, struct tm*, int, struct tm*, int, int, int);
-void*   analyze(char*);
-int     countFiles();
+#include "parametros.h"
 
 int main(int argc, char *const argv[]){
     int option;
@@ -36,21 +21,24 @@ int main(int argc, char *const argv[]){
     strcpy(pathIn, argv[1]);
     strcpy(pathOut, argv[2]);
     multiplicidad = (((int)*argv[3])-48);
-
-    printf("*%s* - *%s* - *%d*\n", pathIn, pathOut, multiplicidad);
     
+    // Empiezo a crear hilos
     pthread_t hilo1;
 
-    pthread_create(&hilo1, NULL, analyze("texto1.txt"), NULL);
+    pthread_create(&hilo1, NULL, analyze(pathIn, pathOut, "texto1.txt"), NULL);
 
+    printf("join hilo\n");
     pthread_join(hilo1, NULL);
+    printf("termino join\n");
 
-   //https://en.wikipedia.org/wiki/C_date_and_time_functions
-   //http://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread_create.html
-    //char a[30] = "Entrada/";
-    //printf("%s\n",a);
-    //printf("A=%s\n",strcat(a,"pepe"));
-    //printf("%s\n",a);
+    /* Declaring an array for 10 threads.
+    //pthread_t thread_id [10];
+
+    //Creating 10 threads with default attributes and the common function namely `functionA` for execution.
+    for (int i = 0; i < 10; i++)
+    {
+        pthread_create (&thread_id [i], NULL, functionA, NULL);
+    }*/
     return 0;
 }
 
@@ -59,7 +47,7 @@ int countFiles(){
     DIR * dirp;
     struct dirent * entry;
 
-    dirp = opendir("Entrada/"); /* There should be error handling after this */
+    dirp = opendir("Entrada/");
     
     if(!dirp){
         printf("No se pudo abrir el directorio.\n");
@@ -69,7 +57,7 @@ int countFiles(){
     entry = readdir(dirp);
 
     while(entry != NULL) {
-        if(entry->d_type == DT_REG){ /* If the entry is a regular file */
+        if(entry->d_type == DT_REG){ // Si es archivo regular
             file_count++;
             printf("%s\n", entry->d_name);
         }
@@ -80,38 +68,41 @@ int countFiles(){
 }
 
 void printFile(FILE* pf, struct tm* tInfo1, int pid, struct tm* tInfo2, int cVocales, int cConsonantes, int cCaracteres){
+
+    printf("Imprimiendo archivo\n");
+
     fprintf(pf, "%d:%d:%d\n", tInfo1->tm_hour, tInfo1->tm_min, tInfo1->tm_sec);
     fprintf(pf, "PID: %d\n",pid);
     fprintf(pf ,"Vocales:%d\nConsonantes:%d\nCaracteres:%d\n", cVocales, cConsonantes, cCaracteres);
     fprintf(pf, "%d:%d:%d\n", tInfo2->tm_hour, tInfo2->tm_min, tInfo2->tm_sec);
 }
 
-void* analyze(char* name){
+void* analyze(char pathIn[], char pathOut[], char* name){
     printf("PID THREAD: %d\n",getpid());
     printf("FILES = %d\n",countFiles());
+
     FILE *fp;
     FILE *fout;
     char caracter;
     int countVocales = 0;
     int countConsonantes = 0;
     int countCaracteres = 0;
-    char in[30] = "Entrada/";
-    char out[30] = "Salida/";
     //////////////////////////////////////
     time_t timeBegin;
     time_t timeEnd;
-    struct tm * timeInfoB;
-    struct tm * timeInfoE;
+    struct tm* timeInfoB;
+    struct tm* timeInfoE;
     //////////////////////////////////////
-    fp = fopen(strcat(in, name),"r");
-    fout = fopen(strcat(out, name),"w");
+
+    fp = fopen(strcat(pathIn, name),"r");
+    fout = fopen(strcat(pathOut, name),"w");
 
     if(!fp){
-        fputs("File IN error",stderr);
+        fputs("File IN error\n",stderr);
         exit(1);
     }
     if(!fout){
-        fputs("File OUT error",stderr);
+        fputs("File OUT error\n",stderr);
         exit(1);
     }
 
@@ -150,9 +141,9 @@ void* analyze(char* name){
     // Imprimo todo el file
     printFile(fout, timeInfoB, getpid(), timeInfoE, countVocales, countConsonantes, countCaracteres);
 
+    printf("termine de imprimir\n");
+
     // Cierro file pointers
     fclose (fout);
     fclose (fp);
-
-    return(0);
 }
