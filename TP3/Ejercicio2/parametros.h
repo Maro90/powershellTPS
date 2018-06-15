@@ -14,7 +14,7 @@
 typedef struct{
     char pathIn[100];
     char pathOut[100];
-    char* nombreArchivo;
+    char nombreArchivo[100];
 }t_dat;
 
 typedef struct{
@@ -28,6 +28,8 @@ typedef struct{
 }t_imprimir;
 
 // debería tener un array o algo donde voy guardando todos los archivos que manejo ese hilo
-void    printfFiles(FILE*, struct tm*, int, struct tm*, int, int, int);
-void*   analyze(char [], char [], char*);
+//void    printfFiles(FILE*, struct tm*, int, struct tm*, int, int, int);
+void    printfFiles(t_imprimir);
+//void*   analyze(char [], char [], char*);
+void*   analyze(void*);
 int     countFiles(char []);

@@ -78,7 +78,7 @@ void cargarArchivosEnLista(t_lista* p, char pIn[]){
     struct dirent * entry;
 
     dirp = opendir(pIn);
-    
+
     if(!dirp){
         printf("No se pudo abrir el directorio.\n");
         exit(1);
