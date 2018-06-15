@@ -1,11 +1,17 @@
 #include "parametros.h"
+#include "lista.h"
+
+t_lista lista;
 
 int main(int argc, char *const argv[]){
-    int option;
     int multiplicidad;
     char pathIn[100];
     char pathOut[100];
-
+    int cantFiles = 0;
+    int filesTotal = 0;
+    int i = 0;
+    int j = 0;
+    
     if(argc != 2 && argc != 4){
         printf("Ingrese ./Ejercicio2.exe h para ayuda.\n");
         exit(1);
@@ -22,32 +28,45 @@ int main(int argc, char *const argv[]){
     strcpy(pathOut, argv[2]);
     multiplicidad = (((int)*argv[3])-48);
     
-    // Empiezo a crear hilos
-    pthread_t hilo1;
+    //////////////////////////////THREADS//////////////////////////////////////////////////////
+    crearLista(&lista);
+    cargarArchivosEnLista(&lista, pathIn);
+    mostrarLista(&lista);
 
-    pthread_create(&hilo1, NULL, analyze(pathIn, pathOut, "texto1.txt"), NULL);
+    filesTotal = countFiles(pathIn);
 
-    printf("join hilo\n");
-    pthread_join(hilo1, NULL);
-    printf("termino join\n");
+    pthread_t hilos[multiplicidad];
 
-    /* Declaring an array for 10 threads.
-    //pthread_t thread_id [10];
+    while(cantFiles < filesTotal){
+		for (i = 0; i < size(&lista); i++){
 
-    //Creating 10 threads with default attributes and the common function namely `functionA` for execution.
-    for (int i = 0; i < 10; i++)
-    {
-        pthread_create (&thread_id [i], NULL, functionA, NULL);
-    }*/
+			//Voy a procesar el primer archivo de la lista
+			pthread_create(&hilos[j], NULL, analyze(pathIn, pathOut, lista->dato.name), NULL);
+            printf("wtf\n");
+			//Se realiza una espera bloqueante a cada uno de los threads de vecTid[i]
+			pthread_join(hilos[j], NULL);
+            printf("wtf2\n");
+			//Borro la posicion del archivo actual procesado
+            eliminarPorPosicion(&lista, 1);
+
+            cantFiles++;
+			j++;
+
+			//Si la cantidad de archivos, supera la cantidad maxima establecida de Threads, vuelvo al primer thread
+			if(j>=multiplicidad){
+				j=0;
+            }
+		}
+	}
     return 0;
 }
-
-int countFiles(){
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int countFiles(char pathIn[]){
     int file_count = 0;
     DIR * dirp;
     struct dirent * entry;
 
-    dirp = opendir("Entrada/");
+    dirp = opendir(pathIn);
     
     if(!dirp){
         printf("No se pudo abrir el directorio.\n");
@@ -59,14 +78,13 @@ int countFiles(){
     while(entry != NULL) {
         if(entry->d_type == DT_REG){ // Si es archivo regular
             file_count++;
-            printf("%s\n", entry->d_name);
         }
         entry = readdir(dirp);
     }
     closedir(dirp);
     return(file_count);
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void printFile(FILE* pf, struct tm* tInfo1, int pid, struct tm* tInfo2, int cVocales, int cConsonantes, int cCaracteres){
 
     printf("Imprimiendo archivo\n");
@@ -76,10 +94,9 @@ void printFile(FILE* pf, struct tm* tInfo1, int pid, struct tm* tInfo2, int cVoc
     fprintf(pf ,"Vocales:%d\nConsonantes:%d\nCaracteres:%d\n", cVocales, cConsonantes, cCaracteres);
     fprintf(pf, "%d:%d:%d\n", tInfo2->tm_hour, tInfo2->tm_min, tInfo2->tm_sec);
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void* analyze(char pathIn[], char pathOut[], char* name){
-    printf("PID THREAD: %d\n",getpid());
-    printf("FILES = %d\n",countFiles());
+    lista->dato.pidThread = getpid();
 
     FILE *fp;
     FILE *fout;
@@ -87,6 +104,8 @@ void* analyze(char pathIn[], char pathOut[], char* name){
     int countVocales = 0;
     int countConsonantes = 0;
     int countCaracteres = 0;
+    char pin[100];
+    char pout[100];
     //////////////////////////////////////
     time_t timeBegin;
     time_t timeEnd;
@@ -94,8 +113,17 @@ void* analyze(char pathIn[], char pathOut[], char* name){
     struct tm* timeInfoE;
     //////////////////////////////////////
 
-    fp = fopen(strcat(pathIn, name),"r");
-    fout = fopen(strcat(pathOut, name),"w");
+    strcpy(pin,pathIn);
+    strcpy(pout,pathOut);
+
+    strcat(pin, name);
+    strcat(pout, name);
+
+    fp = fopen(pin,"r");
+    fout = fopen(pout,"w");
+
+    printf("\npath in = %s\n", pin);
+    printf("path out = %s\n\n", pout);
 
     if(!fp){
         fputs("File IN error\n",stderr);
@@ -146,4 +174,7 @@ void* analyze(char pathIn[], char pathOut[], char* name){
     // Cierro file pointers
     fclose (fout);
     fclose (fp);
+
+    return(0);
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////

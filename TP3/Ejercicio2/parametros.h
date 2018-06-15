@@ -15,7 +15,7 @@ typedef struct{
     char pathIn[100];
     char pathOut[100];
     char* nombreArchivo;
-}t_dato;
+}t_dat;
 
 typedef struct{
     FILE* pf;
@@ -30,4 +30,4 @@ typedef struct{
 // debería tener un array o algo donde voy guardando todos los archivos que manejo ese hilo
 void    printfFiles(FILE*, struct tm*, int, struct tm*, int, int, int);
 void*   analyze(char [], char [], char*);
-int     countFiles();
+int     countFiles(char []);
