@@ -1,16 +1,24 @@
 #include "parametros.h"
+#include "lista.h"
+
+t_lista lista;
 
 int main(int argc, char *const argv[]){
-    int option;
     int multiplicidad;
     char pathIn[100];
     char pathOut[100];
+    int cantFiles = 0;
+    int filesTotal = 0;
+    int i = 0;
+    int j = 0;
+
+    t_dat dato;
 
     if(argc != 2 && argc != 4){
         printf("Ingrese ./Ejercicio2.exe h para ayuda.\n");
         exit(1);
     }else if(argc == 2 && (strcmp(argv[1],"h") == 0)){
-        printf("La sintaxis es ./Ejercicio2.exe [pathEntrada] [pathSalida] [nivel paralelismo]\nFormato: [string] [string] [int]\n");
+        printf("La sintaxis es ./Ejercicio2.exe [pathEntrada] [pathSalida] [nivel paralelismo]\nFormato: [string] [string] [int]\nEjemplo: Entrada/ Salida/ 1\n");
         exit(1);
     }else if((((int)*argv[3]) < 49) || (((int)*argv[3]) > 57)){ // compruebo que este entre 1 y 9
         printf("[nivel paralelismo] debe ser un número entre 1 y 9\n");
@@ -18,37 +26,66 @@ int main(int argc, char *const argv[]){
     }
 
     // (((int)*argv[3])-48) es el parametro 3, que sería la multiplicidad
-    strcpy(pathIn, argv[1]);
-    strcpy(pathOut, argv[2]);
+    strcpy(dato.pathIn, argv[1]);
+    strcpy(dato.pathOut, argv[2]);
     multiplicidad = (((int)*argv[3])-48);
-    
-    // Empiezo a crear hilos
-    pthread_t hilo1;
+    //////////////////////////////THREADS//////////////////////////////////////////////////////
+    crearLista(&lista);
+    cargarArchivosEnLista(&lista, dato.pathIn);
+    mostrarLista(&lista);
 
-    pthread_create(&hilo1, NULL, analyze(pathIn, pathOut, "texto1.txt"), NULL);
+    filesTotal = countFiles(dato.pathIn);
 
-    printf("join hilo\n");
-    pthread_join(hilo1, NULL);
-    printf("termino join\n");
+    //******************************************//
+    printf(".....................................\n");
+    printf("Files Totales = %d\n", filesTotal);
+    //******************************************//
 
-    /* Declaring an array for 10 threads.
-    //pthread_t thread_id [10];
+    pthread_t hilos[multiplicidad];
 
-    //Creating 10 threads with default attributes and the common function namely `functionA` for execution.
-    for (int i = 0; i < 10; i++)
-    {
-        pthread_create (&thread_id [i], NULL, functionA, NULL);
-    }*/
+    while(cantFiles < filesTotal){
+		for (i = 0; i < size(&lista); i++){
+
+            strcpy(dato.nombreArchivo,lista->dato.name);
+			//Voy a procesar el primer archivo de la lista
+			pthread_create(&hilos[j], NULL, analyze, (void*)&dato);
+
+            //******************************************//
+            printf("Esperando Join\n");
+            printf(".....................................\n");
+            //******************************************//
+
+			//Se realiza una espera bloqueante a cada uno de los threads de vecTid[i]
+			pthread_join(hilos[j], NULL);
+
+            //******************************************//
+            printf(".....................................\n");
+            printf("Sali del Join\n");
+            printf(".....................................\n");
+            //******************************************//
+
+			//Borro la posicion del archivo actual procesado
+            eliminarPorPosicion(&lista, 1);
+
+            cantFiles++;
+			j++;
+
+			//Si la cantidad de archivos, supera la cantidad maxima establecida de Threads, vuelvo al primer thread
+			if(j>=multiplicidad){
+				j=0;
+            }
+		}
+	}
     return 0;
 }
-
-int countFiles(){
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int countFiles(char pathIn[]){
     int file_count = 0;
     DIR * dirp;
     struct dirent * entry;
 
-    dirp = opendir("Entrada/");
-    
+    dirp = opendir(pathIn);
+
     if(!dirp){
         printf("No se pudo abrir el directorio.\n");
         exit(1);
@@ -59,91 +96,105 @@ int countFiles(){
     while(entry != NULL) {
         if(entry->d_type == DT_REG){ // Si es archivo regular
             file_count++;
-            printf("%s\n", entry->d_name);
         }
         entry = readdir(dirp);
     }
     closedir(dirp);
     return(file_count);
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void printFile(t_imprimir p){
 
-void printFile(FILE* pf, struct tm* tInfo1, int pid, struct tm* tInfo2, int cVocales, int cConsonantes, int cCaracteres){
-
+    //******************************************//
+    printf(".....................................\n");
     printf("Imprimiendo archivo\n");
+    printf(".....................................\n");
+    //******************************************//
 
-    fprintf(pf, "%d:%d:%d\n", tInfo1->tm_hour, tInfo1->tm_min, tInfo1->tm_sec);
-    fprintf(pf, "PID: %d\n",pid);
-    fprintf(pf ,"Vocales:%d\nConsonantes:%d\nCaracteres:%d\n", cVocales, cConsonantes, cCaracteres);
-    fprintf(pf, "%d:%d:%d\n", tInfo2->tm_hour, tInfo2->tm_min, tInfo2->tm_sec);
+    fprintf(p.pf, "%d:%d:%d\n", p.tInfo1->tm_hour, p.tInfo1->tm_min, p.tInfo1->tm_sec);
+    fprintf(p.pf, "PID: %d\n",p.pid);
+    fprintf(p.pf ,"Vocales:%d\nConsonantes:%d\nCaracteres:%d\n", p.cantVocales, p.cantConsonantes, p.cantCaracteres);
+    fprintf(p.pf, "%d:%d:%d\n", p.tInfo2->tm_hour, p.tInfo2->tm_min, p.tInfo2->tm_sec);
 }
-
-void* analyze(char pathIn[], char pathOut[], char* name){
-    printf("PID THREAD: %d\n",getpid());
-    printf("FILES = %d\n",countFiles());
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void* analyze(void* d){
+    t_imprimir imprimir;
+    lista->dato.pidThread = getpid();
     FILE *fp;
-    FILE *fout;
     char caracter;
-    int countVocales = 0;
-    int countConsonantes = 0;
-    int countCaracteres = 0;
-    //////////////////////////////////////
+    char pin[100];
+    char pout[100];
     time_t timeBegin;
     time_t timeEnd;
-    struct tm* timeInfoB;
-    struct tm* timeInfoE;
-    //////////////////////////////////////
+    t_dat dat = *(t_dat *) d;
 
-    fp = fopen(strcat(pathIn, name),"r");
-    fout = fopen(strcat(pathOut, name),"w");
+    imprimir.pid = getpid();
+    imprimir.cantVocales = 0;
+    imprimir.cantConsonantes = 0;
+    imprimir.cantCaracteres = 0;
+    strcpy(pin,dat.pathIn);
+    strcpy(pout,dat.pathOut);
+    strcat(pin,dat.nombreArchivo);
+    strcat(pout,dat.nombreArchivo);
+
+    fp = fopen(pin,"r");
+    imprimir.pf = fopen(pout,"w");
 
     if(!fp){
         fputs("File IN error\n",stderr);
         exit(1);
     }
-    if(!fout){
+    if(!imprimir.pf){
         fputs("File OUT error\n",stderr);
         exit(1);
     }
 
     // Tomo el tiempo de inicio
     time(&timeBegin);
-    timeInfoB = localtime(&timeBegin);
-    ///////////////////////////////////
+    imprimir.tInfo1 = localtime(&timeBegin);
 
     while((caracter = fgetc(fp)) != EOF){
-        // printeo para ver el archivo esta al pedo
-        printf("%c",caracter);
         // es letra?
         if(ES_LETRA(caracter)){
              // Es vocal o consontante?
             if(ES_VOCAL(caracter)){
                 // Es vocal
-                countVocales++;
+                imprimir.cantVocales++;
             }else{
                 // Es consonante
-                countConsonantes++;
+                imprimir.cantConsonantes++;
             }
         }else{
             // Si es /n no lo cuento
             if(caracter != 10){
-                countCaracteres++;
+                imprimir.cantCaracteres++;
             }
         }
 	}
+
+    //******************************************//
     printf("\n-------------------------------------------\n");
-    printf("Vocales:%d\nConsonantes:%d\nCaracteres:%d\n", countVocales, countConsonantes, countCaracteres);
+    printf("Resultado:\nVocales:%d\nConsonantes:%d\nCaracteres:%d\n", imprimir.cantVocales, imprimir.cantConsonantes, imprimir.cantCaracteres);
+    printf("\n-------------------------------------------\n");
+    //******************************************//
 
     // Tomo el tiempo de finalización
     time(&timeEnd);
-    timeInfoE = localtime(&timeEnd);
+    imprimir.tInfo2 = localtime(&timeEnd);
 
     // Imprimo todo el file
-    printFile(fout, timeInfoB, getpid(), timeInfoE, countVocales, countConsonantes, countCaracteres);
+    printFile(imprimir);
 
+    //******************************************//
+    printf(".....................................\n");
     printf("termine de imprimir\n");
+    printf(".....................................\n");
+    //******************************************//
 
     // Cierro file pointers
-    fclose (fout);
+    fclose(imprimir.pf);
     fclose (fp);
+
+    return(0);
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
