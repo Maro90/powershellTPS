@@ -12,9 +12,19 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct{
+    char primerArchivo[100];
+    char ultimoArchivo[100];
+    char minArchivo[100];
+    char maxArchivo[100];
+    int minCaracter;
+    long int maxCaracter;
+}t_pantalla;
+
+typedef struct{
     char pathIn[100];
     char pathOut[100];
     char nombreArchivo[100];
+    int caracteresTot;
 }t_dat;
 
 typedef struct{
@@ -28,8 +38,8 @@ typedef struct{
 }t_imprimir;
 
 // debería tener un array o algo donde voy guardando todos los archivos que manejo ese hilo
-//void    printfFiles(FILE*, struct tm*, int, struct tm*, int, int, int);
-void    printfFiles(t_imprimir);
-//void*   analyze(char [], char [], char*);
+void    printFile(t_imprimir);
 void*   analyze(void*);
 int     countFiles(char []);
+void    imprimirPantalla(t_pantalla);
+void    comprobarMaxMin(t_pantalla*, char [], long int);

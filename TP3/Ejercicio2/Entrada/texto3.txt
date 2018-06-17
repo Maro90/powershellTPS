@@ -1,0 +1,5 @@
+a
+*
+Vocales: 12
+Consonantes: 17
+Caracteres: 13

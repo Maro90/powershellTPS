@@ -38,13 +38,17 @@ void vaciarLista(t_lista *p){
 }
 //////////////////////////////////////////////////////////////////////////////////
 void mostrarLista(t_lista *p){
-    printf("***********************************************\n");
-    printf("Contenido de la lista:\n");
+    t_nodo* ant;
+    ant = *p;
     while(*p){
-        printf("Pid: %d - Name: %s\n",((*p)->dato).pidThread,((*p)->dato).name);
-        p = &(*p)->sig;
+        printf("Thread: %d\n", ((*p)->dato).pidThread);
+        while(*p && (((*p)->dato).pidThread == (ant->dato).pidThread)){
+            printf("Name: %s\n", ((*p)->dato).name);
+            ant = *p;
+            p = &(*p)->sig;
+        }
+        ant = *p;
     }
-    printf("***********************************************\n");
 }
 //////////////////////////////////////////////////////////////////////////////////
 int eliminarPorPosicion(t_lista *p, int poss){
@@ -97,6 +101,38 @@ void cargarArchivosEnLista(t_lista* p, char pIn[]){
     closedir(dirp);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void ordenarLista(t_lista *p){
+    t_nodo* inicio;
+    t_nodo* current;
+    int aux;
+    char auxN[100];
 
-//ARREGLAR EL COMPARADOR DE INSERTAR ORDENADO, QUE INSERTE IGUAL SI TIENEN EL MISMO PID
-// Y QUE PONGA PRIMERO EL TEXTO POR ABECEDARIO
+    inicio = *p;
+    current = (*p)->sig;
+
+    while(inicio){
+        while(current){
+            if((inicio->dato).pidThread > ((current)->dato).pidThread){
+                // INTERCAMBIO PID
+                aux = ((current)->dato).pidThread;
+                ((current)->dato).pidThread = (inicio->dato).pidThread;
+                (inicio->dato).pidThread = aux;
+                // INTERCAMBIO NOMBRE ARCHIVO
+                strcpy(auxN, ((current)->dato).name);
+                strcpy(((current)->dato).name, (inicio->dato).name);
+                strcpy((inicio->dato).name, auxN);
+
+            }else{
+                current = current->sig;
+            }
+        }
+        // Si no se termino la lista, cambio los punteros.
+        if(inicio->sig){
+            inicio = inicio->sig;
+            current = inicio->sig;
+        }else{
+            inicio = inicio->sig;
+        }
+    }
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
