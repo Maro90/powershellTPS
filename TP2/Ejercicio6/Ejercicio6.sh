@@ -84,5 +84,10 @@ elif [ "$1" = "-?" ]; then
 	ErrorSintaxOHelp 0
 fi
 
+if [ ! -d "$1" ]; then
+  echo 'La carpeta indicada no es valida.'
+  exit
+fi
+
 echo "FOLDER		COUNT		SIZE[KB]"
 ls -LRl $1 | ( while read -r line; do parseLine "$line"; done; print) | sort -t$'\t' -k3 -n -r | head -n 10
