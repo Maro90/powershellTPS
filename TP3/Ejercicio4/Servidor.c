@@ -55,7 +55,7 @@ void abrirArchivo(){
                 preguntas->siguiente->siguiente = NULL;
                 preguntas = preguntas->siguiente;
             }
-            
+
             cantidadDePreguntas++;
             nroRespuesta = 0;
             preguntas->pregunta = (char*)malloc(strlen(line + 2) * sizeof(char));
@@ -98,11 +98,11 @@ void abrirArchivo(){
     t_pregunta *pregunta = lista_preguntas;
 
     while(pregunta != NULL){
-        printf("%s\n", pregunta->pregunta);
-        printf("%s\n", pregunta->respuesta1);
-        printf("%s\n", pregunta->respuesta2);
-        printf("%s\n", pregunta->respuesta3);
-        printf("%s\n", pregunta->respuesta4);
+        printf("%s", pregunta->pregunta);
+        printf("%s", pregunta->respuesta1);
+        printf("%s", pregunta->respuesta2);
+        printf("%s", pregunta->respuesta3);
+        printf("%s", pregunta->respuesta4);
         printf("La correcta es la: %d\n\n", pregunta->rc + 1);
         pregunta = pregunta->siguiente;
     }

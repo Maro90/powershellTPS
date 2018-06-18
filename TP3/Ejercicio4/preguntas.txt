@@ -40,7 +40,7 @@ R: Sergio Aguero
 RC: Lionel Messi
 P:¿Quién de estos jugadores gano al menos un mundial?
 R: Angel DiMaria
-RC: Diego Armando Maradona
+RC: Diego Maradona
 R: Sergio Aguero
 R: Lionel Messi
 P:¿Cuál es la página de la catedra?
