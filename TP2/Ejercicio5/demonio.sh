@@ -11,7 +11,7 @@ signal_SIGUSR1(){
     fileName="$directory$DIA$HORA"
     zipfile="${PATH_SALIDA}/$fileName.zip"
 
-    count=`zip $zipfile ${PATH_ENTRADA}/* | wc -l`
+    count=`zip -r $zipfile ${PATH_ENTRADA}/ | wc -l`
     echo "Se comprimieron $count archivos el $DATE" >> $logFile
 
     du -k $zipfile | awk '
