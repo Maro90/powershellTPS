@@ -7,16 +7,17 @@
 #include <sys/file.h>
 #define _GNU_SOURCE
 
-typedef struct{
+typedef struct pregunta{
     char* pregunta;
     char* respuesta1;
     char* respuesta2;
     char* respuesta3;
     char* respuesta4;
     int rc;
+    struct pregunta * siguiente;
 }t_pregunta;
 
-t_pregunta preguntas[1];
+t_pregunta *lista_preguntas;
 
 void abrirArchivo();
 
@@ -26,7 +27,7 @@ int main(int argc, char *const argv[]){
 }
 
 void abrirArchivo(){
-    int cantidadDePreguntas = -1;
+    int cantidadDePreguntas = 0;
     int nroRespuesta = 0;
 
     FILE * fp;
@@ -34,33 +35,55 @@ void abrirArchivo(){
     size_t len = 0;
     ssize_t read;
 
+    lista_preguntas = malloc(sizeof(t_pregunta));
+    lista_preguntas->siguiente = NULL;
+
     fp = fopen("preguntas.txt", "r");
     if (fp == NULL) {
         exit(EXIT_FAILURE);
     }
+
+    t_pregunta *preguntas = lista_preguntas;
+
     while ((read = getline(&line, &len, fp)) != -1) {
+
         char type = line[0];
         if( type == 'P'){
+            if(cantidadDePreguntas > 0){
+                //Agrego nueva pregunta a la lista
+                preguntas->siguiente = malloc(sizeof(t_pregunta));
+                preguntas->siguiente->siguiente = NULL;
+                preguntas = preguntas->siguiente;
+            }
+
             cantidadDePreguntas++;
             nroRespuesta = 0;
-            strcpy(preguntas[cantidadDePreguntas].pregunta,line + 2);
+            preguntas->pregunta = (char*)malloc(strlen(line + 2) * sizeof(char));
+            strcpy(preguntas->pregunta,line + 2);
         } else {
+            int offset = 2;
+            if( line[1] == 'C'){    //Respuesta Correcta
+                preguntas->rc = nroRespuesta;
+                offset = 3;
+            }
+
             switch(nroRespuesta){
                 case 0:
-                    strcpy(preguntas[cantidadDePreguntas].respuesta1,line + 2);
+                    preguntas->respuesta1 = (char*)malloc(strlen(line + offset) * sizeof(char));
+                    strcpy(preguntas->respuesta1,line + offset);
                     break;
                 case 1:
-                    strcpy(preguntas[cantidadDePreguntas].respuesta2,line + 2);
+                    preguntas->respuesta2 = (char*)malloc(strlen(line + offset) * sizeof(char));
+                    strcpy(preguntas->respuesta2,line + offset);
                     break;
                 case 2:
-                    strcpy(preguntas[cantidadDePreguntas].respuesta3,line + 2);
+                    preguntas->respuesta3 = (char*)malloc(strlen(line + offset) * sizeof(char));
+                    strcpy(preguntas->respuesta3,line + offset);
                     break;
                 case 3:
-                    strcpy(preguntas[cantidadDePreguntas].respuesta4,line + 2);
+                    preguntas->respuesta4 = (char*)malloc(strlen(line + offset) * sizeof(char));
+                    strcpy(preguntas->respuesta4,line + offset);
                     break;
-            }
-            if( line[1] == 'C'){    //Respuesta Correcta
-                preguntas[cantidadDePreguntas].rc = nroRespuesta;
             }
             nroRespuesta++;
         }
@@ -70,8 +93,17 @@ void abrirArchivo(){
     if (line) {
         free(line);
     }
+    printf("Cantidad de Preguntas: %d\n\n", cantidadDePreguntas);
 
-    for(int i = 0; i<cantidadDePreguntas;i++){
-            printf("%s\n", preguntas[i].pregunta);
+    t_pregunta *pregunta = lista_preguntas;
+
+    while(pregunta != NULL){
+        printf("%s", pregunta->pregunta);
+        printf("%s", pregunta->respuesta1);
+        printf("%s", pregunta->respuesta2);
+        printf("%s", pregunta->respuesta3);
+        printf("%s", pregunta->respuesta4);
+        printf("La correcta es la: %d\n\n", pregunta->rc + 1);
+        pregunta = pregunta->siguiente;
     }
 }
