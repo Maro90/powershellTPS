@@ -344,6 +344,7 @@ void * atenderCliente (void * parametro){
     * Se cierran el socket del cliente
     */
     close(Socket_Cliente);
+    return NULL;
 }
 
 int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta){
