@@ -18,8 +18,7 @@
  *	suficiente para los datos. Devuelve el numero de bytes leidos o
  * 0 si se cierra fichero o -1 si hay error.
  */
-int leeSocket (int fd, void *datos, int longitud)
-{
+int leeSocket (int fd, void *datos, int longitud) {
 	int leido=0;
 	int aux = 0;
     
@@ -33,26 +32,21 @@ int leeSocket (int fd, void *datos, int longitud)
 	/*
      * Mientras no hayamos leido todos los datos solicitados
      */
-//	while (leido < longitud)
-//	{
+	while (leido < longitud) {
 		aux = recv (fd, datos, longitud,MSG_WAITALL);
-		if (aux > 0)
-		{
+		if (aux > 0) {
 			/*
              * Si hemos conseguido leer datos, incrementamos la variable
              * que contiene los datos leidos hasta el momento
              */
-		}
-		else
-		{
+		} else {
 			/*
              * Si read devuelve 0, es que se ha cerrado el socket. Devolvemos
              * los caracteres leidos hasta ese momento
              */
 			if (aux == 0)
 				return leido;
-			if (aux == -1)
-			{
+			if (aux == -1) {
 				/*
                  * En caso de error, la variable errno nos indica el tipo
                  * de error.
@@ -66,8 +60,7 @@ int leeSocket (int fd, void *datos, int longitud)
                  * El resto de los posibles errores provocan que salgamos de
                  * la funcion con error.
                  */
-				switch (errno)
-				{
+				switch (errno) {
 					case EINTR:
 					case EAGAIN:
 						usleep (100);
@@ -76,7 +69,7 @@ int leeSocket (int fd, void *datos, int longitud)
 						return -1;
 				}
 			}
-//		}
+		}
 	}
     
 	/*
@@ -89,8 +82,7 @@ int leeSocket (int fd, void *datos, int longitud)
  * Escribe dato en el socket cliente. Devuelve numero de bytes escritos,
  * o -1 si hay error.
  */
-int escribeSocket (int fd, void *datos, int longitud)
-{
+int escribeSocket (int fd, void *datos, int longitud) {
 	int escrito = 0;
 	int aux = 0;
     
@@ -104,19 +96,15 @@ int escribeSocket (int fd, void *datos, int longitud)
      * Bucle hasta que hayamos escrito todos los caracteres que nos han
      * indicado.
      */
-//	while (escrito < longitud)
-//	{
+	while (escrito < longitud) {
 		aux = send (fd, datos + escrito, longitud - escrito,0);
-		if (aux > 0)
-		{
+		if (aux > 0) {
 			/*
              * Si hemos conseguido escribir caracteres, se actualiza la
              * variable Escrito
              */
 			escrito = escrito + aux;
-		}
-		else
-		{
+		} else {
 			/*
              * Si se ha cerrado el socket, devolvemos el numero de caracteres
              * leidos.
@@ -127,7 +115,7 @@ int escribeSocket (int fd, void *datos, int longitud)
 			else
 				return -1;
 		}
-//	}
+	}
     
 	/*
      * Devolvemos el total de caracteres leidos
