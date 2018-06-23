@@ -11,8 +11,6 @@
 #include "Socket_Servidor.h"
 #include "Socket.h"
 
-#define _GNU_SOURCE
-
 typedef struct pthread_list{
     pthread_t               tid;
     struct pthread_list *   siguiente;
