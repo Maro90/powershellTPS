@@ -8,7 +8,10 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <signal.h>
-#include "Socket_Servidor.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <errno.h>
 #include "Socket.h"
 
 typedef struct pthread_list{
@@ -41,7 +44,8 @@ int Socket_Servidor = 0;
 t_pthread_list * threads_list = NULL;
 int jugando;
 
-//---------------------------------------------------------------------------------------------------
+
+
 void desconectar ();
 void abrirArchivoDePreguntas();
 void agregarPreguntaALista(char * pregunta, char * respuestas[], int respuestaCorrecta);
@@ -49,17 +53,177 @@ void iniciarServer();
 void * atenderCliente (void * parametro);
 void esperarThreads();
 int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta);
+
 //---------------------------------------------------------------------------------------------------
 
-int main(int argc, char *const argv[]) {
+
+
+int main(int argc, char *argv []) {
 
     signal (SIGINT, desconectar);	//atiendo las signal
 	signal (SIGTERM, desconectar);	//atiendo las signal
 
-    abrirArchivoDePreguntas();
-    iniciarServer();
-    // exit(EXIT_SUCCESS);
+	abrirArchivoDePreguntas();
+
+	struct sockaddr_in direccion;
+
+	Socket_Servidor = socket(AF_INET, SOCK_STREAM, 0);
+	if (Socket_Servidor == -1)
+	 	return -1;
+
+	direccion.sin_family = AF_INET;
+	direccion.sin_addr.s_addr=htonl(INADDR_ANY);
+
+    direccion.sin_port = htons(PUERTO);
+	bzero(&(direccion.sin_zero), 8);
+
+	if (bind(Socket_Servidor,(struct sockaddr *)&direccion,sizeof(struct sockaddr)) == -1){
+		close(Socket_Servidor);
+		printf("Error bind\n");
+		return -1;
+	}
+
+
+	/*
+	* Avisamos al sistema que comience a atender peticiones de clientes.
+	*/
+	if (listen(Socket_Servidor, 5) == -1) {
+		close (Socket_Servidor);
+		return -1;
+	}
+
+    pthread_t tid;
+
+	t_pthread_list * ptl = threads_list;		//creo punteros para moverme por la lista
+    t_pthread_list * ptlAnterior = NULL;		
+
+    while (conectado) {	//mientras este conectado el socket y no se reciba la signal se tratara de conectar
+		int Socket_Cliente = 0;
+
+		struct sockaddr Cliente; 
+		int Descriptor_Cliente; 
+		int Longitud_Cliente; 
+
+		Socket_Cliente = accept (Socket_Servidor, &Cliente, &Longitud_Cliente); 
+        if (Socket_Cliente == -1) {
+            if (conectado)							
+                printf ("No se puede abrir socket de cliente\n");
+            else{
+                printf ("\tCerrando sistema y subprocesos\n");
+            }
+        } else {
+
+            	if (ptl == NULL) {
+	            	ptl= malloc(sizeof(t_pthread_list));
+	            	if(ptl == NULL){
+	                	printf("Error, no hay mas memoria\n");
+	                    exit(EXIT_FAILURE);
+	            	}
+	        	}
+
+            pthread_par par;
+			par.socket = Socket_Cliente;
+
+        	pthread_create (&tid, NULL, atenderCliente, (void *)&par);
+            ptl->tid = tid;
+        	
+			ptl->siguiente = NULL;
+        
+        	if (ptlAnterior) {
+            	ptlAnterior->siguiente = ptl;
+        	}
+        	ptlAnterior = ptl;
+        	ptl = NULL;
+		}
+    }
+
+    if (threads_list != NULL) {
+    	esperarThreads();
+    }
+
+	close (Socket_Servidor);
+    
+	printf("Finalizado el juego.\n");
+
 }
+
+
+
+
+
+
+
+
+//---------------------------------------------------------------------------------------------------
+/*
+*   Se encarga de atender a los clientes.
+*
+*/
+
+void * atenderCliente (void * parametro){
+    
+ 	pthread_t thread;
+    int Socket_Cliente = ((pthread_par *)parametro)->socket;
+
+    char Cadena[100];
+	
+	t_pregunta_cliente pregunta;
+	obtenerSiguientePregunta(&pregunta, 0);
+
+	Lee_Socket (Socket_Cliente, Cadena, 5);
+	printf ("Soy Servior, he recibido : %s\n", Cadena);
+
+	strcpy (Cadena, "Adios");
+	Escribe_Socket (Socket_Cliente, &pregunta, sizeof(t_pregunta));
+
+    /*
+    * Se cierran el socket del cliente
+    */
+    close(Socket_Cliente);
+    return NULL;
+}
+
+//---------------------------------------------------------------------------------------------------
+/*
+*   Se encarga de esperar los threads de la lista.
+*
+*/
+void esperarThreads(){
+    int i =0;
+    t_pthread_list * aux = NULL;
+    
+    pthread_t tid = 0;			//mediante la lista de threads ID voy recorriendo y revisando que hayan finalizado
+    
+    while (threads_list != NULL) {
+        tid = threads_list->tid;
+        
+        aux = threads_list;
+        if(aux->siguiente != NULL){
+            threads_list = aux->siguiente;
+        }else{
+            threads_list = NULL;
+	    }
+	    if(tid!=0) {
+            pthread_join(tid, NULL);	//espero la finalizacion del thread
+        }   
+        free(aux);			//libero la memoria que utlizo la lista
+    }
+    return;
+}
+
+//---------------------------------------------------------------------------------------------------
+/*
+ *  Esta funcion se encarga de hacer que no se acepten mas conexiones
+ */
+
+void desconectar (){
+    printf ("\tCerrando el socket\n");
+
+	conectado = 0;		//hago que se cierre la conexion
+    close (Socket_Servidor);	//cierro el socket del servidor
+}
+
+
 
 //---------------------------------------------------------------------------------------------------
 /*
@@ -230,120 +394,6 @@ void agregarPreguntaALista(char * pregunta, char * respuestas[], int respuestaCo
 }
 
 //---------------------------------------------------------------------------------------------------
-/*
-*   Se encarga de inicializar el server
-*
-*/
-
-void iniciarServer(){
-    pthread_t tid;
-
-	t_pthread_list * ptl = threads_list;		//creo punteros para moverme por la lista
-    t_pthread_list * ptlAnterior = NULL;		
-
-    Socket_Servidor = abreSocket(NULL,PUERTO,2);		//Se abre el Socket del servidor
-	if (Socket_Servidor == -1){
-		printf ("No se puede abrir socket servidor\n");
-	    exit(EXIT_FAILURE);
-	}
-
-    while (conectado) {					//mientras este conectado el socket y no se reciba la signal se tratara de conectar
-		int Socket_Cliente = 0;
-
-		Socket_Cliente = aceptaConexionCliente(Socket_Servidor);	//Se espera a que un cliente se conecte
-        if (Socket_Cliente == -1) {
-            if (conectado)							//Si aun debe tener conexion y falla es porque fallo el cliente
-                printf ("No se puede abrir socket de cliente\n");
-            else{
-                printf ("\tCerrando sistema y subprocesos\n");	//Si falla porque se desconecto es por pedido de cerrar
-            }
-        } else {
-            	if (ptl == NULL) {						//Si el puntero apunta a null creo un espacio de memoria para la informacion
-	            	ptl= malloc(sizeof(t_pthread_list));		//Con esto creo al lista de threads
-	            	if(ptl == NULL){
-	                	printf("Error, no hay mas memoria\n");
-	                    exit(EXIT_FAILURE);
-	            	}
-	        	}
-
-            pthread_par par;
-			par.socket = Socket_Cliente;
-
-        	pthread_create (&tid, NULL, atenderCliente, (void *)&par);	//Creo el thread que se encargue de atender al cliente
-            ptl->tid = tid;			//Guardo el thread id en la lista
-        	
-            /*
-				Lo siguiente son algoritmos para hacer la lista dinamica
-			*/
-			ptl->siguiente = NULL;
-        
-        	if (ptlAnterior) {
-            	ptlAnterior->siguiente = ptl;
-        	}
-        	ptlAnterior = ptl;
-        	ptl = NULL;
-		}
-    }
-
-    if (threads_list != NULL) {
-    	esperarThreads();				//Espero la finalizacion de los threads creados
-    }
-
-	close (Socket_Servidor);					//Cierro el Socket del servidor
-    
-	printf("Finalizado el juego.\n");
-    
-	exit(EXIT_SUCCESS);	
-
-}
-
-//---------------------------------------------------------------------------------------------------
-/*
-*   Se encarga de atender a los clientes.
-*
-*/
-
-void * atenderCliente (void * parametro){
-    
-    int respuesta;
- 	pthread_t thread;
-    int Socket_Cliente = ((pthread_par *)parametro)->socket;
-
-    t_pregunta_cliente pregunta;
-    pregunta.seguir = 4;
-
-    int preguntaNro = 0;
-
-    while(jugando){
-        // if (
-                strcpy(pregunta.pregunta,lista_preguntas->pregunta);
-                for(int i = 0; i < 4; i++){
-                    strcpy(pregunta.respuestas[i],lista_preguntas->respuestas[i]);
-                }
-
-            // obtenerSiguientePregunta(&pregunta, preguntaNro); //== 1){
-            escribeSocket(Socket_Cliente, &pregunta, sizeof(pregunta));
-
-            leeSocket (Socket_Cliente, &respuesta, sizeof(int));
-
-        // } else {
-        //     pregunta.seguir = 2;
-        //     escribeSocket (Socket_Cliente, &pregunta, sizeof(pregunta));
-        // }
-        preguntaNro++;
-    }   
-
-
-    int resultado = 1;
-
-    // escribeSocket (Socket_Cliente, &resultado, sizeof(int));
-
-    /*
-    * Se cierran el socket del cliente
-    */
-    close(Socket_Cliente);
-    return NULL;
-}
 
 int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta){
     int pos = 0;
@@ -362,45 +412,4 @@ int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta){
         strcpy(pregunta->respuestas[i],pLista->respuestas[i]);
     }
     return 1;
-}
-
-
-//---------------------------------------------------------------------------------------------------
-/*
-*   Se encarga de esperar los threads de la lista.
-*
-*/
-void esperarThreads(){
-    int i =0;
-    t_pthread_list * aux = NULL;
-    
-    pthread_t tid = 0;			//mediante la lista de threads ID voy recorriendo y revisando que hayan finalizado
-    
-    while (threads_list != NULL) {
-        tid = threads_list->tid;
-        
-        aux = threads_list;
-        if(aux->siguiente != NULL){
-            threads_list = aux->siguiente;
-        }else{
-            threads_list = NULL;
-	    }
-	    if(tid!=0) {
-            pthread_join(tid, NULL);	//espero la finalizacion del thread
-        }   
-        free(aux);			//libero la memoria que utlizo la lista
-    }
-    return;
-}
-
-//---------------------------------------------------------------------------------------------------
-/*
- *  Esta funcion se encarga de hacer que no se acepten mas conexiones
- */
-
-void desconectar (){
-    printf ("\tCerrando el socket\n");
-
-	conectado = 0;		//hago que se cierre la conexion
-    close (Socket_Servidor);	//cierro el socket del servidor
 }
