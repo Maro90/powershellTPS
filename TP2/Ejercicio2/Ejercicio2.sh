@@ -62,7 +62,7 @@ ARCH1=/tmp/`basename "$1"`.$$
 
 cp "$1" "$ARCH1"
 
-if [ -s "$2" ]; then
+if [ ! -s "$2" ]; then
 	PMAYUS=""
 else
 	PMAYUS=$(sed -r 's/(.*)/s\/\1\/\1\/I;/' "$2")
