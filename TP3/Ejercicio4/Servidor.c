@@ -14,14 +14,20 @@
 #include <errno.h>
 #include "Socket.h"
 
+//---------------------------------------------------------------------------------------------------
+
 typedef struct pthread_list{
     pthread_t               tid;
     struct pthread_list *   siguiente;
 } t_pthread_list;
 
+//----------------------------
+
 typedef struct {
     int               socket;
 } pthread_par;
+
+//----------------------------
 
 typedef struct pregunta{
     char pregunta[100];
@@ -30,21 +36,25 @@ typedef struct pregunta{
     struct pregunta * siguiente;
 } t_pregunta;
 
+//----------------------------
+
 typedef struct{
     int seguir;
     char pregunta[100];
     char respuestas[4][100];
-} t_pregunta_cliente;
+} t_comunicacion;
+
+
+//---------------------------------------------------------------------------------------------------
 
 t_pregunta *lista_preguntas = NULL;
-
 int PUERTO = 10019;
 int conectado = 1;
 int Socket_Servidor = 0;
 t_pthread_list * threads_list = NULL;
 int jugando;
 
-
+//---------------------------------------------------------------------------------------------------
 
 void desconectar ();
 void abrirArchivoDePreguntas();
@@ -52,7 +62,7 @@ void agregarPreguntaALista(char * pregunta, char * respuestas[], int respuestaCo
 void iniciarServer();
 void * atenderCliente (void * parametro);
 void esperarThreads();
-int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta);
+int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta);
 
 //---------------------------------------------------------------------------------------------------
 
@@ -166,15 +176,27 @@ void * atenderCliente (void * parametro){
     int Socket_Cliente = ((pthread_par *)parametro)->socket;
 
     char Cadena[100];
-	
-	t_pregunta_cliente pregunta;
-	obtenerSiguientePregunta(&pregunta, 0);
+	int nroPregunta = 0;
 
-	Lee_Socket (Socket_Cliente, Cadena, 5);
-	printf ("Soy Servior, he recibido : %s\n", Cadena);
+    int hayMasPreguntas = 1;
+	t_comunicacion pregunta;
+    pregunta.seguir = 1;
 
-	strcpy (Cadena, "Adios");
-	Escribe_Socket (Socket_Cliente, &pregunta, sizeof(t_pregunta));
+    while ( hayMasPreguntas ) {
+
+        hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
+        printf("Pidio la pregunta %d\n",nroPregunta);
+
+        nroPregunta++;
+
+        printf("Mando %s\n",pregunta.pregunta);
+        printf("hayMasPreguntas %d\n",hayMasPreguntas);
+
+	    Escribe_Socket(Socket_Cliente, &pregunta, sizeof(t_pregunta));
+    }
+    
+    pregunta.seguir = 0;
+    Escribe_Socket (Socket_Cliente, &pregunta, sizeof(t_pregunta));
 
     /*
     * Se cierran el socket del cliente
@@ -192,6 +214,8 @@ void esperarThreads(){
     int i =0;
     t_pthread_list * aux = NULL;
     
+    printf("Espera los threads\n");
+
     pthread_t tid = 0;			//mediante la lista de threads ID voy recorriendo y revisando que hayan finalizado
     
     while (threads_list != NULL) {
@@ -395,7 +419,8 @@ void agregarPreguntaALista(char * pregunta, char * respuestas[], int respuestaCo
 
 //---------------------------------------------------------------------------------------------------
 
-int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta){
+int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta){
+
     int pos = 0;
     t_pregunta * pLista = lista_preguntas;
     while(pos < nroPregunta && pLista != NULL){
@@ -404,6 +429,7 @@ int obtenerSiguientePregunta(t_pregunta_cliente * pregunta, int nroPregunta){
     }
 
     if (pLista==NULL){
+        pregunta->seguir = 0;
         return 0;
     }
 

@@ -22,7 +22,10 @@ typedef struct{
     int seguir;
     char pregunta[100];
     char respuestas[4][100];
-} t_pregunta_cliente;
+} t_comunicacion;
+
+
+void mostrarPregunta(t_comunicacion * comunicacion);
 
 
 int main(int argc, char *argv []) {
@@ -47,22 +50,50 @@ int main(int argc, char *argv []) {
 	if (Socket_Con_Servidor == -1)
 		return -1;
 
-		printf("socket\n");
-
 	if (connect (Socket_Con_Servidor, (struct sockaddr *)&Direccion, sizeof (Direccion)) == -1){
 		printf ("No puedo establecer conexion con el servidor\n");
 		exit (-1);
 	}
-		printf("conect\n");
 
-	strcpy (Cadena, "Hola");
-	Escribe_Socket (Socket_Con_Servidor, Cadena, 5);
+	int nroPregunta = 0;
+	int jugando = 1;
+	t_comunicacion pregunta;
 
+	while(jugando == 1){
+		Lee_Socket(Socket_Con_Servidor, &pregunta, sizeof(t_comunicacion));
+		nroPregunta++;
+		printf("Pregunta %d\n seguir %d\n",nroPregunta, pregunta.seguir);
+	    printf("%s\n",pregunta.pregunta);
 
-	t_pregunta_cliente pregunta;
-(
-	Lee_Socket (Socket_Con_Servidor, &pregunta, sizeof(t_pregunta_cliente)));
-	printf ("Soy cliente, He recibido : %s\n", pregunta.pregunta);
+		mostrarPregunta(&pregunta);
+
+		if(pregunta.seguir == 0){
+			jugando = 0;
+		}
+	}
+	printf("Salio y cierra socket\n");
 
 	close (Socket_Con_Servidor);
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void mostrarPregunta(t_comunicacion * comunicacion){
+		if(comunicacion->seguir == 0){
+			return;
+		}
+        int respuesta = 0;
+	    printf("\n---------------------------------------------------------------------\n");
+	    printf("%s\n",comunicacion->pregunta);
+        for(int i=0; i<4; i++){
+            printf("RTA %d: %s\n",i+1,comunicacion->respuestas[i]);
+        }
+        // printf("Ingrese la respuesta: ");
+	    // scanf("%d", &respuesta);
+	    // while (respuesta < 1 || respuesta > 4) { /* Se verifica la respuesta sea válida */
+		//     printf("Debe responder una de las opciones\n");
+		//     printf("Ingrese la respuesta: ");
+	    //     scanf("%d", &respuesta);
+	    // }
+        // escribeSocket (Socket_Con_Servidor, &respuesta, sizeof(int));
 }
