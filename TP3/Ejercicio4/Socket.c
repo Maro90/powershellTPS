@@ -1,8 +1,3 @@
-/*
-* Javier Abellan, 20 Jun 2000
-*
-* Funciones de lectura y escritura en sockets
-*/
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -10,15 +5,12 @@
 #include <errno.h>
 #include <stdio.h>
 
-
-
 /*
 * Lee datos del socket. Supone que se le pasa un buffer con hueco 
 *	suficiente para los datos. Devuelve el numero de bytes leidos o
 * 0 si se cierra fichero o -1 si hay error.
 */
-int Lee_Socket (int fd, void *Datos, int Longitud)
-{
+int Lee_Socket (int fd, void *Datos, int Longitud) {
 	int Leido = 0;
 	int Aux = 0;
 
@@ -31,27 +23,22 @@ int Lee_Socket (int fd, void *Datos, int Longitud)
 	/*
 	* Mientras no hayamos leido todos los datos solicitados
 	*/
-	while (Leido < Longitud)
-	{
-		Aux = read (fd, Datos + Leido, Longitud - Leido);
-		if (Aux > 0)
-		{
+	while (Leido < Longitud) {
+		Aux = recv(fd, Datos + Leido, Longitud - Leido,MSG_WAITALL);
+		if (Aux > 0) {
 			/* 
 			* Si hemos conseguido leer datos, incrementamos la variable
 			* que contiene los datos leidos hasta el momento
 			*/
 			Leido = Leido + Aux;
-		}
-		else
-		{
+		} else {
 			/*
 			* Si read devuelve 0, es que se ha cerrado el socket. Devolvemos
 			* los caracteres leidos hasta ese momento
 			*/
 			if (Aux == 0) 
 				return Leido;
-			if (Aux == -1)
-			{
+			if (Aux == -1) {
 				/*
 				* En caso de error, la variable errno nos indica el tipo
 				* de error. 
@@ -65,8 +52,7 @@ int Lee_Socket (int fd, void *Datos, int Longitud)
 				* El resto de los posibles errores provocan que salgamos de 
 				* la funcion con error.
 				*/
-				switch (errno)
-				{
+				switch (errno) {
 					case EINTR:
 					case EAGAIN:
 						usleep (100);
@@ -88,8 +74,7 @@ int Lee_Socket (int fd, void *Datos, int Longitud)
 * Escribe dato en el socket cliente. Devuelve numero de bytes escritos,
 * o -1 si hay error.
 */
-int Escribe_Socket (int fd, void *Datos, int Longitud)
-{
+int Escribe_Socket (int fd, void *Datos, int Longitud) {
 	int Escrito = 0;
 	int Aux = 0;
 
@@ -103,19 +88,15 @@ int Escribe_Socket (int fd, void *Datos, int Longitud)
 	* Bucle hasta que hayamos escrito todos los caracteres que nos han
 	* indicado.
 	*/
-	while (Escrito < Longitud)
-	{
-		Aux = write (fd, Datos + Escrito, Longitud - Escrito);
-		if (Aux > 0)
-		{
+	while (Escrito < Longitud) {
+		Aux = send(fd, Datos + Escrito, Longitud - Escrito,0);
+		if (Aux > 0) {
 			/*
 			* Si hemos conseguido escribir caracteres, se actualiza la
 			* variable Escrito
 			*/
 			Escrito = Escrito + Aux;
-		}
-		else
-		{
+		} else {
 			/*
 			* Si se ha cerrado el socket, devolvemos el numero de caracteres
 			* leidos.
