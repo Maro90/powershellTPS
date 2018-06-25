@@ -116,8 +116,6 @@ void iniciarJuego(){
 	while(jugando == 1){
 		Lee_Socket(Socket_Con_Servidor, &pregunta, sizeof(t_comunicacion));
 		nroPregunta++;
-		printf("Pregunta %d\nseguir %d\n",nroPregunta, pregunta.seguir);
-
 		int respuesta = mostrarPregunta(&pregunta);
 		if (respuesta !=-1){
 			resp.servicio = 2;

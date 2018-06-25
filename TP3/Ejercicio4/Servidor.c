@@ -405,6 +405,7 @@ void iniciarJuego(){
         hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
         mandarPregunta(pregunta);
         sleep(tiempoParaResponder); 
+        nroPregunta++;
     }
     
     pregunta.seguir = 0;
