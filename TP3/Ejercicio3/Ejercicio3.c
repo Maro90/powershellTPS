@@ -33,6 +33,10 @@ FILE* fpOut;
 
 int main(int argc, char *argv []) {
 
+	signal(SIGCHLD, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+
+
     if (argc == 1){
         printf("Error en la llamada, utilice -h para recibir más información.\n");
 		exit(EXIT_FAILURE);
@@ -82,10 +86,7 @@ int main(int argc, char *argv []) {
 	}
 						
 	// ignora las señales
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-
-	printf("ID del proceso: %d \n", process_id);
+	printf("ID del proceso: %d \n", getpid());
 
     while (1) {
 		// Crea el FIFO:  mkfifo(<pathname>, <permission>)
@@ -95,7 +96,7 @@ int main(int argc, char *argv []) {
         fifo = open(myfifo, O_RDONLY);
 
        	if ( read(fifo, msj, sizeof(msj))<=0) {
-        	perror("No se pudo leer en el FIFO\n"); 
+        	// perror("No se pudo leer en el FIFO\n"); 
 	 	} else {
 			// consigue la fecha y la hora
 			time_t t = time(NULL);
@@ -104,7 +105,7 @@ int main(int argc, char *argv []) {
 		
 	 		fpOut = fopen( outDir, "a");
 		    if( fpOut == NULL){
-				printf("ERROR, no se pudo abrir el directorio %s\n", outDir);
+				// printf("ERROR, no se pudo abrir el directorio %s\n", outDir);
 		        exit(EXIT_FAILURE);
 			}
 	 		
