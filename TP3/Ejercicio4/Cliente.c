@@ -58,7 +58,7 @@ void iniciarJuego();
 
 int main(int argc, char *argv []) {
 
-	if( argc < 1){
+	if( argc < 2){
 		printf("Error, debe pasar la IP del servidor por parámetro.");
 		return -1;
 	}
