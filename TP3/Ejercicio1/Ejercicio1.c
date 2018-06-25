@@ -3,6 +3,20 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/*#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 3 - Ejericio 1			#
+#		Nombre del Script: Ejercicio1.c		    #
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################*/
+
 char *tipo(int tipo_id){
 	switch(tipo_id){
 		case 1:
