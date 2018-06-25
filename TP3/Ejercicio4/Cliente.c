@@ -15,9 +15,14 @@
 #include "Socket.h"
 #include <arpa/inet.h>
 
-#define PUERTO 10019
+#define PUERTO 10016
 //---------------------------------------------------------------------------------------------------
 
+typedef struct{
+    int servicio;
+    int rta;
+    char texto[30];
+} t_respuesta_cliente;
 
 typedef struct{
     int seguir;
@@ -73,11 +78,12 @@ int main(int argc, char *argv []) {
 
 	printf("Conectado con el server\n");
 
-	char nombre[30];
+	t_respuesta_cliente respuesta;
+
     printf("Ingrese su nombre: ");
-	gets(nombre);
-	
-	Escribe_Socket (Socket_Con_Servidor, &nombre, 30 * sizeof(char));
+	gets(respuesta.texto);
+	respuesta.servicio = 1;
+	Escribe_Socket (Socket_Con_Servidor, &respuesta, sizeof(t_respuesta_cliente));
 
 	printf("Espere, en breve iniciarán las preguntas\n");
 
@@ -90,6 +96,7 @@ void iniciarJuego(){
 	int nroPregunta = 0;
 	int jugando = 1;
 	t_comunicacion pregunta;
+	t_respuesta_cliente resp;
 
 	while(jugando == 1){
 		Lee_Socket(Socket_Con_Servidor, &pregunta, sizeof(t_comunicacion));
@@ -98,9 +105,10 @@ void iniciarJuego(){
 	    printf("%s\n",pregunta.pregunta);
 
 		int respuesta = mostrarPregunta(&pregunta);
-		printf("Respuesta: %d",respuesta);
 		if (respuesta !=-1){
-			Escribe_Socket (Socket_Con_Servidor, &respuesta, sizeof(int));
+			resp.servicio = 2;
+			resp.rta = respuesta;
+			Escribe_Socket (Socket_Con_Servidor, &resp, sizeof(t_respuesta_cliente));
 		}
 
 		if(pregunta.seguir == 0){

@@ -33,7 +33,6 @@ typedef struct cliente{
     int                 socket;
     char                nombre[30];
     int                 puntos;
-    int                 nroJugador;
     struct cliente  *   siguiente;
 } t_clientes;
 
@@ -54,12 +53,27 @@ typedef struct{
     char respuestas[4][100];
 } t_comunicacion;
 
+//----------------------------
+
+typedef struct{
+    int servicio;
+    int rta;
+    char texto[30];
+} t_respuesta_cliente;
+
 
 //---------------------------------------------------------------------------------------------------
-int tiempoParaRegistrarse = 5;//segundos
-int PUERTO = 10019;
+
+int tiempoParaRegistrarse = 25;//segundos
+int tiempoParaResponder = 30;
+
+
+int PUERTO = 10016;
 int registrando = 1;
+int jugando = 0;
 int Socket_Servidor = 0;
+int finalizo = 0;
+int cantidadDeJugadores = 0;
 
 pthread_t   threadAlarma;
 pthread_t   threadRegistro;
@@ -68,21 +82,26 @@ t_clientes *    lista_clientes = NULL;
 t_pregunta *    lista_preguntas = NULL;
 t_pthread_list * threads_list = NULL;
 
+fd_set descriptoresLectura;	/* Descriptores de interes para select() */
+
+
 //---------------------------------------------------------------------------------------------------
 
 void desconectar ();
 int agregarPreguntaALista(char * pregunta, char * respuestas[], int respuestaCorrecta);
-void * atenderCliente (void * parametro);
 void esperarThreads();
 int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta);
 int inicializar();
 int abrirArchivoDePreguntas();
 int levantarServer();
-void *registrarClientes(void *arg);
 void *FuncionAlarma(void *arg);
 void handlerAlarma(int sig);
 void iniciarJuego();
-
+void agregarJugadorALista(int socket);
+void borrarJugador(int descriptor);
+void * atenderComunicaciones(void *arg);
+void registrarNuevoCliente();
+void mandarPregunta(t_comunicacion);
 //---------------------------------------------------------------------------------------------------
 
 
@@ -100,7 +119,7 @@ int main(int argc, char *argv []) {
 
 	pthread_create(&threadAlarma, NULL, FuncionAlarma, 0);
 	
-    pthread_create(&threadRegistro, NULL, registrarClientes, 0);
+    pthread_create(&threadRegistro, NULL, atenderComunicaciones, 0);
 
 	pthread_join(threadAlarma,NULL);
 
@@ -121,11 +140,11 @@ int main(int argc, char *argv []) {
 
 int inicializar(){
 
-	lista_clientes = malloc(sizeof(t_clientes));
-	if(lista_clientes == NULL){
-        	printf("Error, no hay mas memoria\n");
-		return EXIT_FAILURE;
-	}
+	// lista_clientes = malloc(sizeof(t_clientes));
+	// if(lista_clientes == NULL){
+    //     	printf("Error, no hay mas memoria\n");
+	// 	return EXIT_FAILURE;
+	// }
 
     threads_list = malloc(sizeof(t_pthread_list));
 	if(threads_list == NULL){
@@ -159,8 +178,8 @@ void *FuncionAlarma(void *arg){
 void handlerAlarma(int sig){
     if (tiempoParaRegistrarse  == 0){
         pthread_cancel(threadAlarma);
-        pthread_cancel(threadRegistro);
         registrando = 0;
+        jugando = 1;
     } else {
         tiempoParaRegistrarse--;
     }
@@ -197,67 +216,167 @@ int levantarServer(){
     return 1;
 }
 
-
 //---------------------------------------------------------------------------------------------------
-/*
-*   Se encarga de registrar a los clientes.
-*
-*/
 
-void *registrarClientes(void *arg){
-
-	t_clientes * pcl = lista_clientes;
-    t_clientes * pclAnterior = NULL;		
+void * atenderComunicaciones(void *arg){
 
     int nroJugador = 0;
+    struct timeval tv;
+    tv.tv_sec = 5;
+    tv.tv_usec = 50000;
+
 
     printf ("Comienza el registro\n");
 
-    while (registrando) {   //Durante el periodo de registro
-		int Socket_Cliente = 0;
+    while(finalizo != 1){
+        /* Se inicializa descriptoresLectura */
 
-		struct sockaddr Cliente; 
-		int Longitud_Cliente; 
+		FD_ZERO(&descriptoresLectura);
 
-		Socket_Cliente = accept (Socket_Servidor, &Cliente, &Longitud_Cliente); 
-        if (Socket_Cliente == -1) {
-            if (registrando)							
-                printf ("No se puede abrir socket de cliente\n");
-            else{
-                printf ("\tCerrando sistema y subprocesos\n");
-            }
-        } else {
-            nroJugador++;
+		/* Se añade para select() el socket servidor */
 
-            if (pcl == NULL) {
-	            pcl= malloc(sizeof(t_clientes));
-	            if(pcl == NULL){
-	                printf("Error, no hay mas memoria\n");
-                    return 0;
-	            }
-	        }
+		FD_SET(Socket_Servidor, &descriptoresLectura);
 
-            //Leo el nombre del cliente y lo guardo en el listado
-            char nombre[30];
-            Lee_Socket(Socket_Cliente, &nombre, 30 * sizeof(char));
-
-            printf("%s se unió a la partida\n", nombre);
-
-            pcl->socket = Socket_Cliente;
-            pcl->puntos = 0;
-            pcl->nroJugador = nroJugador;
-            stpcpy(pcl->nombre,nombre);
-            pcl->siguiente = NULL;
+		/* Se añaden para select() los sockets con los clientes ya conectados */
+        t_clientes * pSockets = lista_clientes;
+        int mayorDescriptor = 0;
         
-            if (pclAnterior) {
-                pclAnterior->siguiente = pcl;
-            }
-            pclAnterior = pcl;
-            pcl = NULL;
-		}
-    }
-    printf("Basta de regustrar\n");
 
+        while(pSockets != NULL ){
+			FD_SET(pSockets->socket, &descriptoresLectura);
+            if (pSockets->socket > mayorDescriptor){
+                mayorDescriptor = pSockets->socket;
+            }
+            pSockets = pSockets->siguiente;
+        }
+
+		if (mayorDescriptor < Socket_Servidor)
+			mayorDescriptor = Socket_Servidor;
+
+		/* Espera indefinida hasta que alguno de los descriptores tenga algo
+		 * que decir: un nuevo cliente o un cliente ya conectado que envía un
+		 * mensaje */
+		select (mayorDescriptor + 1, &descriptoresLectura, NULL, NULL, &tv);
+
+        t_clientes * pSockets2 = lista_clientes;
+        
+        while(pSockets2 != NULL){
+			if (FD_ISSET (pSockets2->socket, &descriptoresLectura)) {
+				/* Se lee lo enviado por el cliente y se escribe en pantalla */
+                t_respuesta_cliente respuesta;
+				if ((Lee_Socket(pSockets2->socket, &respuesta, sizeof(t_respuesta_cliente)) > 0)) {
+                    switch(respuesta.servicio){
+                        case 1:
+                            //Nombre del jugador
+                            printf("%s se unió a la partida\n", respuesta.texto);
+                            strcpy(pSockets2->nombre,respuesta.texto);
+                            break;
+                        case 2:
+                            //Respuesta a la pregunta
+                            break;
+                        default:
+                            break;
+                    }
+
+                    //TODO: LEER A LOS CLIENTES
+
+
+				} else {
+					/* El cliente ha cerrado la conexión y se elimina */
+					printf ("Cliente ha cerrado la conexión\n");
+                    borrarJugador(pSockets2->socket);                    
+				}
+			}
+            pSockets2 = pSockets2->siguiente;
+        }
+        /* Se comprueba si algún cliente nuevo desea conectarse y se le
+		 * admite */
+		if (FD_ISSET(Socket_Servidor, &descriptoresLectura))
+			registrarNuevoCliente();
+    }
+}
+//---------------------------------------------------------------------------------------------------
+
+void registrarNuevoCliente(){
+    int Socket_Cliente = 0;
+	struct sockaddr Cliente; 
+	int Longitud_Cliente; 
+
+	Socket_Cliente = accept (Socket_Servidor, &Cliente, &Longitud_Cliente);
+    if (Socket_Cliente == -1) {
+        if (finalizo != 1)							
+            printf ("No se puede abrir socket de cliente\n");
+        else{
+            printf ("\tCerrando sistema y subprocesos\n");
+        }
+    } else {    
+        //TODO: PREGUNTAR SI ESTOY REGISTRANDO    
+        agregarJugadorALista(Socket_Cliente);
+	}    
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void agregarJugadorALista(int socket){
+    t_clientes * pcl = lista_clientes;
+    t_clientes * pclAnterior = NULL;		
+    
+    if ( lista_clientes == NULL ){
+        lista_clientes = malloc(sizeof(t_clientes));
+	    if(lista_clientes == NULL){
+	        printf("Error, no hay mas memoria\n");
+            desconectar();
+            exit(EXIT_FAILURE);
+	    }
+        lista_clientes->socket = socket;
+        lista_clientes->puntos = 0;
+        lista_clientes->siguiente = NULL;
+        return;
+    } 
+    
+    while(pcl != NULL ){
+        pclAnterior = pcl;
+        pcl = pcl->siguiente;
+    }
+
+    if (pcl == NULL) {
+	    pcl= malloc(sizeof(t_clientes));
+	    if(pcl == NULL){
+	        printf("Error, no hay mas memoria\n");
+            exit(EXIT_FAILURE);
+	    }
+	}
+    
+    pcl->socket = socket;
+    pcl->puntos = 0;
+    pcl->siguiente = NULL;
+        
+    if (pclAnterior) {
+        pclAnterior->siguiente = pcl;
+    }     
+    cantidadDeJugadores++;
+
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void borrarJugador(int descriptor){
+    t_clientes * pcl = lista_clientes;
+    t_clientes * pclAnterior = NULL;		
+    
+    while(pcl != NULL && pcl->socket != descriptor){
+        pclAnterior = pcl;
+        pcl = pcl->siguiente;
+    }
+
+    if(pcl->socket == descriptor){
+        pclAnterior->siguiente = pcl->siguiente;
+        close(pcl->socket);
+        free(pcl);
+    } else {
+        printf("No encontro ese cliente");
+    }
+    cantidadDeJugadores--;
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -267,44 +386,26 @@ void *registrarClientes(void *arg){
 *
 */
 
-
 void iniciarJuego(){
 
 	t_clientes * pcl = lista_clientes;
-
-	t_pthread_list * ptl = threads_list;		//creo punteros para moverme por la lista
-    t_pthread_list * ptlAnterior = NULL;		
+	int nroPregunta = 0;
 
     printf("A JUGAR\n");
+    int hayMasPreguntas = 1;
+	t_comunicacion pregunta;
+    pregunta.seguir = 1;
+    int respuesta;
 
-    while(pcl != NULL ){
-
-        if (ptl == NULL) {
-	        ptl= malloc(sizeof(t_pthread_list));
-            if(ptl == NULL){
-                printf("Error, no hay mas memoria\n");
-                exit(EXIT_FAILURE);
-	        }
-	    }
-
-        pthread_par par;
-	    par.socket = pcl->socket;
-
-        pthread_t tid;
-        pthread_create (&tid, NULL, atenderCliente, (void *)&par);
-        ptl->tid = tid;
-    
-	    ptl->siguiente = NULL;
-    
-        if (ptlAnterior) {
-            ptlAnterior->siguiente = ptl;
-        }
-        ptlAnterior = ptl;
-        ptl = NULL;
-
-        pcl = pcl->siguiente;
+    while(jugando && hayMasPreguntas ) {
+        hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
+        mandarPregunta(pregunta);
+        sleep(tiempoParaResponder); 
     }
-    printf("TODOS LOS THREADS INICIADOS\n");
+    
+    pregunta.seguir = 0;
+    mandarPregunta(pregunta);
+
 }
 
 
@@ -316,38 +417,15 @@ void iniciarJuego(){
 *
 */
 
-void * atenderCliente (void * parametro){
-    
- 	pthread_t thread;
-    int Socket_Cliente = ((pthread_par *)parametro)->socket;
+void mandarPregunta(t_comunicacion pregunta){
+    t_clientes * clientes = lista_clientes;
+    int mayorDescriptor = 0;
+        
 
-    char Cadena[100];
-	int nroPregunta = 0;
-
-    int hayMasPreguntas = 0;//1;
-	t_comunicacion pregunta;
-    pregunta.seguir = 1;
-    int respuesta;
-
-    while ( hayMasPreguntas ) {
-
-        hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
-
-	    Escribe_Socket(Socket_Cliente, &pregunta, sizeof(t_pregunta));
-        // sleep(1);
-        Lee_Socket(Socket_Cliente, &respuesta, sizeof(int));
-        printf("Respondio: %d",respuesta);
-
+    while(clientes != NULL ){
+        Escribe_Socket (clientes->socket, &pregunta, sizeof(t_comunicacion));
+        clientes = clientes->siguiente;
     }
-    
-    pregunta.seguir = 0;
-    Escribe_Socket (Socket_Cliente, &pregunta, sizeof(t_pregunta));
-
-    /*
-    * Se cierran el socket del cliente
-    */
-    close(Socket_Cliente);
-    return NULL;
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -388,7 +466,8 @@ void esperarThreads(){
 void desconectar (){
     printf ("\tCerrando el socket\n");
 
-	registrando = 0;		//hago que se cierre la conexion
+	finalizo = 1;		//hago que se cierre la conexion
+    jugando = 0;
     close (Socket_Servidor);	//cierro el socket del servidor
 }
 
