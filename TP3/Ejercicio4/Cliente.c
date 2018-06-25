@@ -37,6 +37,12 @@ void iniciarJuego();
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
+
+	if( argc < 1){
+		printf("Error, debe pasar la IP del servidor por parámetro.");
+		return -1;
+	}
+
 	char Cadena[100];
 
 	struct sockaddr_in Direccion;
@@ -53,7 +59,7 @@ int main(int argc, char *argv []) {
 	Direccion.sin_family = AF_INET;
 	// Direccion.sin_addr.s_addr = ((struct in_addr *)(Host->h_addr))->s_addr;
 	Direccion.sin_port = htons(PUERTO);
-	Direccion.sin_addr.s_addr = inet_addr("127.0.0.1");
+	Direccion.sin_addr.s_addr = inet_addr(argv[1]);
 
 	
 	Socket_Con_Servidor = socket (AF_INET, SOCK_STREAM, 0);

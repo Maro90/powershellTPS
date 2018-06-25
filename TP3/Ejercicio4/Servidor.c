@@ -80,6 +80,7 @@ int levantarServer();
 int registrarClientes();
 void *FuncionAlarma(void *arg);
 void handlerAlarma(int sig);
+void iniciarJuego();
 
 //---------------------------------------------------------------------------------------------------
 
@@ -103,6 +104,8 @@ int main(int argc, char *argv []) {
 	pthread_join(threadAlarma,NULL);
 
     printf("Se acabo el tiempo de registro\n");
+    printf("A JUGAR\n");
+    iniciarJuego();
 
     if (threads_list != NULL) {
     	esperarThreads();
@@ -124,10 +127,7 @@ int inicializar(){
     if (levantarServer() == 0 ) {
         return 0;
     }
-
-    printf("TODO LISTO PARA JUGAR\n");
-
-
+    printf("TODO LISTO PARA EMPEZAR\n");
     return 1;
 }
 
