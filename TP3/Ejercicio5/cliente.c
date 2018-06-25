@@ -1,6 +1,20 @@
 #include "shared.h"
 #include <string.h>
 
+/*#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 3 - Ejericio 5			#
+#		Nombre del Script: cliente.c		    #
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################*/
+
 void init(){
 	for (int i = 0; i < 4; i++)
 	{
