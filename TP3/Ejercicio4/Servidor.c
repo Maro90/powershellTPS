@@ -62,6 +62,7 @@ int registrando = 1;
 int Socket_Servidor = 0;
 
 pthread_t   threadAlarma;
+pthread_t   threadRegistro;
 
 t_clientes *    lista_clientes = NULL;
 t_pregunta *    lista_preguntas = NULL;
@@ -77,7 +78,7 @@ int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta);
 int inicializar();
 int abrirArchivoDePreguntas();
 int levantarServer();
-int registrarClientes();
+void *registrarClientes(void *arg);
 void *FuncionAlarma(void *arg);
 void handlerAlarma(int sig);
 void iniciarJuego();
@@ -90,7 +91,7 @@ int main(int argc, char *argv []) {
 
     signal (SIGINT, desconectar);	//atiendo las signal
 	signal (SIGTERM, desconectar);	//atiendo las signal
-	signal(SIGALRM, handlerAlarma);
+	signal (SIGALRM, handlerAlarma);
 
     if (inicializar() == 0){
 	    printf("No se pudo inicializar el juego el juego.\n");
@@ -98,13 +99,12 @@ int main(int argc, char *argv []) {
     }
 
 	pthread_create(&threadAlarma, NULL, FuncionAlarma, 0);
-
-    registrarClientes();
+	
+    pthread_create(&threadRegistro, NULL, registrarClientes, 0);
 
 	pthread_join(threadAlarma,NULL);
 
     printf("Se acabo el tiempo de registro\n");
-    printf("A JUGAR\n");
     iniciarJuego();
 
     if (threads_list != NULL) {
@@ -120,6 +120,20 @@ int main(int argc, char *argv []) {
 //---------------------------------------------------------------------------------------------------
 
 int inicializar(){
+
+	lista_clientes = malloc(sizeof(t_clientes));
+	if(lista_clientes == NULL){
+        	printf("Error, no hay mas memoria\n");
+		return EXIT_FAILURE;
+	}
+
+    threads_list = malloc(sizeof(t_pthread_list));
+	if(threads_list == NULL){
+        	printf("Error, no hay mas memoria\n");
+		return EXIT_FAILURE;
+	}
+
+
 
     if (abrirArchivoDePreguntas() == 0 ) {
         return 0;
@@ -145,6 +159,7 @@ void *FuncionAlarma(void *arg){
 void handlerAlarma(int sig){
     if (tiempoParaRegistrarse  == 0){
         pthread_cancel(threadAlarma);
+        pthread_cancel(threadRegistro);
         registrando = 0;
     } else {
         tiempoParaRegistrarse--;
@@ -189,12 +204,14 @@ int levantarServer(){
 *
 */
 
-int registrarClientes(){
+void *registrarClientes(void *arg){
 
 	t_clientes * pcl = lista_clientes;
     t_clientes * pclAnterior = NULL;		
 
     int nroJugador = 0;
+
+    printf ("Comienza el registro\n");
 
     while (registrando) {   //Durante el periodo de registro
 		int Socket_Cliente = 0;
@@ -219,6 +236,7 @@ int registrarClientes(){
                     return 0;
 	            }
 	        }
+
             //Leo el nombre del cliente y lo guardo en el listado
             char nombre[30];
             Lee_Socket(Socket_Cliente, &nombre, 30 * sizeof(char));
@@ -238,7 +256,8 @@ int registrarClientes(){
             pcl = NULL;
 		}
     }
-    return 1;
+    printf("Basta de regustrar\n");
+
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -256,14 +275,17 @@ void iniciarJuego(){
 	t_pthread_list * ptl = threads_list;		//creo punteros para moverme por la lista
     t_pthread_list * ptlAnterior = NULL;		
 
+    printf("A JUGAR\n");
+
     while(pcl != NULL ){
+
         if (ptl == NULL) {
 	        ptl= malloc(sizeof(t_pthread_list));
             if(ptl == NULL){
                 printf("Error, no hay mas memoria\n");
                 exit(EXIT_FAILURE);
 	        }
-	    }   
+	    }
 
         pthread_par par;
 	    par.socket = pcl->socket;
@@ -282,6 +304,7 @@ void iniciarJuego(){
 
         pcl = pcl->siguiente;
     }
+    printf("TODOS LOS THREADS INICIADOS\n");
 }
 
 
@@ -301,7 +324,7 @@ void * atenderCliente (void * parametro){
     char Cadena[100];
 	int nroPregunta = 0;
 
-    int hayMasPreguntas = 1;
+    int hayMasPreguntas = 0;//1;
 	t_comunicacion pregunta;
     pregunta.seguir = 1;
     int respuesta;
