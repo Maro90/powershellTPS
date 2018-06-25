@@ -22,6 +22,13 @@
 #include <stdlib.h>
 #include <signal.h>
 
+char c;
+char msj[128];
+char fecha[64];
+char linea[128 + 64];
+int num;
+int fifo;  //FIFO
+FILE* fpOut;	
 
 
 int main(int argc, char *argv []) {
@@ -49,10 +56,66 @@ int main(int argc, char *argv []) {
 		exit(0);
 	}
 
-
 	if( argc != 4){
-		printf("Error, debe pasar el nombre del fifo, el tamaño de la etiqueta y el directorio de destino.\n");
+        printf("Error en la llamada, utilice -h para recibir más información.\n");
 		return -1;
 	}
 
+
+    char * myfifo = argv[1];    // path del FIFO
+    int lenEtiqueta = argv[2];  //tamaño de la etiqueta
+	char * outDir = argv[3];    // path del directorio destino.
+
+	//** creo el demonio
+	pid_t process_id = 0;
+		
+	// Create child process
+	process_id = fork();
+
+	// fallo el fork()
+	if (process_id < 0){
+		printf("falla forrk");
+		exit(EXIT_FAILURE);
+	} else if (process_id > 0) {
+        // Si es el padre, lo mata;
+		exit(EXIT_SUCCESS);
+	}
+						
+	// ignora las señales
+	signal(SIGCHLD, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+
+	printf("ID del proceso: %d \n", process_id);
+
+    while (1) {
+		// Crea el FIFO:  mkfifo(<pathname>, <permission>)
+		mkfifo(myfifo, 0666);
+        	
+		// Abre el FIFO como solo lectura
+        fifo = open(myfifo, O_RDONLY);
+
+       	if ( read(fifo, msj, sizeof(msj))<=0) {
+        	perror("No se pudo leer en el FIFO\n"); 
+	 	} else {
+			// consigue la fecha y la hora
+			time_t t = time(NULL);
+			struct tm *tm = localtime(&t);  
+			strftime(fecha, sizeof(fecha), "%Y%m%d", tm);  // la formatea YYYYMMDD
+		
+	 		fpOut = fopen( outDir, "a");
+		    if( fpOut == NULL){
+				printf("ERROR, no se pudo abrir el directorio %s\n", outDir);
+				return;
+			}
+	 		
+        	sprintf(linea, "%s %s\n", fecha, msj);
+			fputs( linea, fpOut);	
+
+			fclose(fpOut);
+		}
+        close(fifo);
+		unlink(myfifo);
+    }
+
+    return 0;
 }
