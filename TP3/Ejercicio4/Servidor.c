@@ -14,6 +14,20 @@
 #include <errno.h>
 #include "Socket.h"
 
+/*#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 3 - Ejericio 4	    	#
+#		Nombre del Script: Servidor.c		    #
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################*/
+
 //---------------------------------------------------------------------------------------------------
 
 typedef struct pthread_list{
@@ -61,12 +75,10 @@ typedef struct{
     char texto[30];
 } t_respuesta_cliente;
 
-
 //---------------------------------------------------------------------------------------------------
 
 int tiempoParaRegistrarse = 25;//segundos
-int tiempoParaResponder = 30;
-
+int tiempoParaResponder = 5;
 
 int PUERTO = 10016;
 int registrando = 1;
@@ -83,7 +95,6 @@ t_pregunta *    lista_preguntas = NULL;
 t_pthread_list * threads_list = NULL;
 
 fd_set descriptoresLectura;	/* Descriptores de interes para select() */
-
 
 //---------------------------------------------------------------------------------------------------
 
@@ -104,8 +115,6 @@ void registrarNuevoCliente();
 void mandarPregunta(t_comunicacion);
 //---------------------------------------------------------------------------------------------------
 
-
-
 int main(int argc, char *argv []) {
 
     signal (SIGINT, desconectar);	//atiendo las signal
@@ -118,9 +127,7 @@ int main(int argc, char *argv []) {
     }
 
 	pthread_create(&threadAlarma, NULL, FuncionAlarma, 0);
-	
     pthread_create(&threadRegistro, NULL, atenderComunicaciones, 0);
-
 	pthread_join(threadAlarma,NULL);
 
     printf("Se acabo el tiempo de registro\n");
@@ -129,6 +136,8 @@ int main(int argc, char *argv []) {
     if (threads_list != NULL) {
     	esperarThreads();
     }
+    pthread_join(threadRegistro,NULL);
+
 
 	close (Socket_Servidor);
     
@@ -139,12 +148,6 @@ int main(int argc, char *argv []) {
 //---------------------------------------------------------------------------------------------------
 
 int inicializar(){
-
-	// lista_clientes = malloc(sizeof(t_clientes));
-	// if(lista_clientes == NULL){
-    //     	printf("Error, no hay mas memoria\n");
-	// 	return EXIT_FAILURE;
-	// }
 
     threads_list = malloc(sizeof(t_pthread_list));
 	if(threads_list == NULL){
@@ -225,7 +228,6 @@ void * atenderComunicaciones(void *arg){
     tv.tv_sec = 5;
     tv.tv_usec = 50000;
 
-
     printf ("Comienza el registro\n");
 
     while(finalizo != 1){
@@ -273,6 +275,8 @@ void * atenderComunicaciones(void *arg){
                             break;
                         case 2:
                             //Respuesta a la pregunta
+                            printf("%s respondio %d\n", pSockets2->nombre, respuesta.rta);
+
                             break;
                         default:
                             break;
@@ -300,7 +304,7 @@ void * atenderComunicaciones(void *arg){
 void registrarNuevoCliente(){
     int Socket_Cliente = 0;
 	struct sockaddr Cliente; 
-	int Longitud_Cliente; 
+	socklen_t Longitud_Cliente; 
 
 	Socket_Cliente = accept (Socket_Servidor, &Cliente, &Longitud_Cliente);
     if (Socket_Cliente == -1) {
@@ -405,11 +409,7 @@ void iniciarJuego(){
     
     pregunta.seguir = 0;
     mandarPregunta(pregunta);
-
 }
-
-
-
 
 //---------------------------------------------------------------------------------------------------
 /*
@@ -421,8 +421,7 @@ void mandarPregunta(t_comunicacion pregunta){
     t_clientes * clientes = lista_clientes;
     int mayorDescriptor = 0;
         
-
-    while(clientes != NULL ){
+    while(clientes != NULL){
         Escribe_Socket (clientes->socket, &pregunta, sizeof(t_comunicacion));
         clientes = clientes->siguiente;
     }
@@ -465,6 +464,7 @@ void esperarThreads(){
 
 void desconectar (){
     printf ("\tCerrando el socket\n");
+    pthread_cancel(threadAlarma);
 
 	finalizo = 1;		//hago que se cierre la conexion
     jugando = 0;

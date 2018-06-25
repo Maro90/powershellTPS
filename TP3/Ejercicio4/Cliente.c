@@ -15,6 +15,21 @@
 #include "Socket.h"
 #include <arpa/inet.h>
 
+/*#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 3 - Ejericio 4	    	#
+#		Nombre del Script: Cliente.c		    #
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################*/
+
+
 #define PUERTO 10016
 //---------------------------------------------------------------------------------------------------
 
@@ -101,8 +116,7 @@ void iniciarJuego(){
 	while(jugando == 1){
 		Lee_Socket(Socket_Con_Servidor, &pregunta, sizeof(t_comunicacion));
 		nroPregunta++;
-		printf("Pregunta %d\n seguir %d\n",nroPregunta, pregunta.seguir);
-	    printf("%s\n",pregunta.pregunta);
+		printf("Pregunta %d\nseguir %d\n",nroPregunta, pregunta.seguir);
 
 		int respuesta = mostrarPregunta(&pregunta);
 		if (respuesta !=-1){
