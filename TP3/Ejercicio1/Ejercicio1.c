@@ -76,6 +76,15 @@ void crear_hijos(int gen, int gen_max ,int hijos_generacion [],int hijos_limite 
 	}
 }
 
+void printHelp(int argc, char *const argv[]){
+	if(argc == 2 && (strcmp(argv[1],"help")==0 || strcmp(argv[1],"-h")==0)){
+		printf("Help:\n");
+		printf("./Ejercicio1\n");
+		printf("-> No requieren argumentos\n");
+		printf("-> Presionar cualquier tecla para terminar los procesos\n");
+		exit(0);
+	}
+}
 
 int main (void)
 {
