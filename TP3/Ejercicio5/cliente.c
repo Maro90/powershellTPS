@@ -18,7 +18,21 @@ void init(){
 	}
 }
 
+void printHelp(int argc, char *const argv[]){
+	if(argc == 2 && (strcmp(argv[1],"help")==0 || strcmp(argv[1],"-h")==0)){
+		printf("Help:\n");
+		printf("./cliente [texto a encriptar/desencriptar] [1-encriptar/2-desencriptar]\n");
+		printf("---Ejemplo: ./cliente 'hola mundo' 1\n");
+		printf("--->> #$'*k&>%%/$\n");
+		printf("-> Si no se pasan argumentos se solicitaran por stdin\n");
+		printf("-> Previamente el servidor debe estar ejecutando \n");
+		exit(0);
+	}
+}
+
 int main(int argc, char *const argv[]){
+	printHelp(argc,argv);
+
 	init();
 	char messageInput[100];
 	int type;
