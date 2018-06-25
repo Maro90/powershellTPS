@@ -35,7 +35,7 @@ int main(int argc, char *argv []) {
 
     if (argc == 1){
         printf("Error en la llamada, utilice -h para recibir más información.\n");
-        exit(0);
+		exit(EXIT_FAILURE);
     }
 
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0  || strcmp(argv[1], "-?") == 0 || strcmp(argv[1], "-help") == 0) ){
@@ -58,13 +58,13 @@ int main(int argc, char *argv []) {
 
 	if( argc != 4){
         printf("Error en la llamada, utilice -h para recibir más información.\n");
-		return -1;
+		exit(EXIT_FAILURE);
 	}
 
 
-    char * myfifo = argv[1];    // path del FIFO
-    int lenEtiqueta = argv[2];  //tamaño de la etiqueta
-	char * outDir = argv[3];    // path del directorio destino.
+    char * myfifo = argv[1];            // path del FIFO
+    int lenEtiqueta = ((int)*argv[2]);  //tamaño de la etiqueta
+	char * outDir = argv[3];            // path del directorio destino.
 
 	//** creo el demonio
 	pid_t process_id = 0;
@@ -105,7 +105,7 @@ int main(int argc, char *argv []) {
 	 		fpOut = fopen( outDir, "a");
 		    if( fpOut == NULL){
 				printf("ERROR, no se pudo abrir el directorio %s\n", outDir);
-				return;
+		        exit(EXIT_FAILURE);
 			}
 	 		
         	sprintf(linea, "%s %s\n", fecha, msj);
@@ -117,5 +117,5 @@ int main(int argc, char *argv []) {
 		unlink(myfifo);
     }
 
-    return 0;
+	exit(EXIT_SUCCESS);
 }
