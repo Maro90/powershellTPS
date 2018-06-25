@@ -1,5 +1,5 @@
 Ejercicio2: Ejercicio2.o funciones_Lista.o funciones.o
-	gcc -o Ejercicio2.exe Ejercicio2.c funciones_Lista.c funciones.c -lpthread
+	gcc -o Ejercicio2 Ejercicio2.c funciones_Lista.c funciones.c -lpthread
 
 Ejericicio2.o: Ejercicio2.c parametros.h
 	gcc -c Ejercicio2.c

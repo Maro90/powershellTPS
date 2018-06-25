@@ -1,6 +1,20 @@
 #include "parametros.h"
 #include "lista.h"
 
+/*#################################################
+#			  Sistemas Operativos			 	#
+#		Trabajo Práctico 3 - Ejericio 2			#
+#		Nombre del Script: Ejercicio2.c		    #
+#												#
+#				Integrantes:					#
+#		Arana, Juan Pablo 		33904497		#
+#		Gonzalez, Mauro Daniel 	35368160		#
+#		Sapaya, Nicolás Martín 	38319489		#
+#												#
+#		Instancia de Entrega: Entrega			#
+#												#
+#################################################*/
+
 t_lista lista;
 t_lista copiaLista;
 long int caracArch = 0;
@@ -16,12 +30,17 @@ int main(int argc, char *const argv[]){
     t_dat dato;
 
     if(argc != 2 && argc != 4){
-        printf("Ingrese ./Ejercicio2.exe h para ayuda.\n");
+        printf("Ingrese:\n\t./Ejercicio2 -h\n\t./Ejercicio2 -help\n\t./Ejercicio2 -?\n\tpara solicitar ayuda.\n");
         exit(1);
-    }else if(argc == 2 && (strcmp(argv[1],"h") == 0)){
-        printf("La sintaxis es ./Ejercicio2.exe [pathEntrada] [pathSalida] [nivel paralelismo]\nFormato: [string] [string] [int]\nEjemplo: ./Entrada ./Salida 1\n");
+    } 
+    if(argc == 2 && ((strcmp(argv[1],"-help")==0) || (strcmp(argv[1],"-h") == 0) || (strcmp(argv[1],"-?") == 0))){
+        printf("La sintaxis es ./Ejercicio2 [pathEntrada] [pathSalida] [nivel paralelismo]\nFormato: [string] [string] [int]\nEjemplo: ./Entrada ./Salida 1\n");
         exit(1);
-    }else if((((int)*argv[3]) < 49) || (((int)*argv[3]) > 57)){ // compruebo que este entre 1 y 9
+    }else if(argc != 4){
+        printf("Ingrese:\n\t./Ejercicio2 -h\n\t./Ejercicio2 -help\n\t./Ejercicio2 -?\n\tpara solicitar ayuda.\n");
+        exit(1);
+    }
+    if(argc == 4 && ((((int)*argv[3]) < 49) || (((int)*argv[3]) > 57))){ // compruebo que este entre 1 y 9
         printf("[nivel paralelismo] debe ser un número entre 1 y 9\n");
         exit(1);
     }
