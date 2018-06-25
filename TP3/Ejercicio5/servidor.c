@@ -91,7 +91,20 @@ void processMessage(){
 	printf("Realizado!\n");
 }
 
+void printHelp(int argc, char *const argv[]){
+	if(argc == 2 && (strcmp(argv[1],"help")==0 || strcmp(argv[1],"-h")==0)){
+		printf("Help:\n");
+		printf("./servidor\n");
+		printf("-> No requiere argumentos\n");
+		printf("-> Se mostrara por stdout los logs\n");
+		printf("-> ctrl + c (sigint) para salir\n");
+		exit(0);
+	}
+}
+
 int main(int argc, char *const argv[]){
+	printHelp(argc,argv);
+
 	signal(SIGINT, sigInt);
 	init();
 	printf("Esperando mensajes..");

@@ -1,3 +1,6 @@
+help:
+	@echo "'make all' crea ambos ejecutables (servidor y cliente) en la carpeta ./bin"
+
 all: servidor cliente clean
 
 file:
