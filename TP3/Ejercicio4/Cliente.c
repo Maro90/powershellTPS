@@ -29,8 +29,6 @@
 #												#
 #################################################*/
 
-
-#define PUERTO 10016
 //---------------------------------------------------------------------------------------------------
 
 typedef struct{
@@ -48,7 +46,8 @@ typedef struct{
 //---------------------------------------------------------------------------------------------------
 
 int Socket_Con_Servidor;
-
+int PUERTO = 10016;
+char ip[30];
 //---------------------------------------------------------------------------------------------------
 
 int mostrarPregunta(t_comunicacion * comunicacion);
@@ -58,10 +57,36 @@ void iniciarJuego();
 
 int main(int argc, char *argv []) {
 
+
+
+    if (argc < 2){
+        printf("Error en la llamada, utilice -h para recibir más información.\n");
+		exit(EXIT_FAILURE);
+    }
+
+	if (argc == 2 && (strcmp(argv[1], "-h") == 0  || strcmp(argv[1], "-?") == 0 || strcmp(argv[1], "-help") == 0) ){
+		//hacer cosas de get-help
+		printf("Modo de empleo: ./Cliente ip puerto \n");
+		printf("ejemplo de ejecucion localmente: ./Cliente 127.0.0.1 10005 \n");
+		printf( " \n");
+		printf( "Cliente levanta el juego para conectarse a preguntanos ");
+		printf( "\n");
+		printf( " debe recibir como parametros: \n");
+		printf( "	    -obligatorio: IP que se utilizará para la comunicación con el server.\n");
+		printf( "	    -obligatorio: PUERTO que se utilizará para la comunicación con el server.\n");
+		printf( "	    -opcional: h, -help muestra esta ayuda y finaliza \n");
+		printf( "\n" );
+		exit(0);
+	}
+
 	if( argc < 2){
-		printf("Error, debe pasar la IP del servidor por parámetro.");
+		printf("Error, debe pasar la IP y el PUERTO del servidor por parámetro\n");
+		printf("Error en la llamada, utilice -h para recibir más información.\n");
 		return -1;
 	}
+
+	strcpy(ip,argv[1]);			//IP
+    PUERTO = atoi(argv[2]);  //Puerto
 
 	char Cadena[100];
 

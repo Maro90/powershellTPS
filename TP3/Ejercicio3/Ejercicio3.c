@@ -22,10 +22,10 @@
 #include <stdlib.h>
 #include <signal.h>
 
+
 char c;
 char msj[128];
 char fecha[64];
-char linea[128 + 64];
 int num;
 int fifo;  //FIFO
 FILE* fpOut;	
@@ -67,7 +67,7 @@ int main(int argc, char *argv []) {
 
 
     char * myfifo = argv[1];            // path del FIFO
-    int lenEtiqueta = ((int)*argv[2]);  //tamaño de la etiqueta
+	int lenEtiqueta = atoi(argv[2]);  	//tamaño de la etiqueta
 	char * outDir = argv[3];            // path del directorio destino.
 
 	//** creo el demonio
@@ -88,35 +88,52 @@ int main(int argc, char *argv []) {
 	// ignora las señales
 	printf("ID del proceso: %d \n", getpid());
 
-    while (1) {
+		unlink(myfifo);
+
 		// Crea el FIFO:  mkfifo(<pathname>, <permission>)
-		mkfifo(myfifo, 0666);
-        	
+		int result = mkfifo(myfifo, 0666);
+		// chmod (myfifo, 460);
+
+        if (result == -1){
+			printf("Error MKFIFO\n");
+			exit(EXIT_FAILURE);
+		}
 		// Abre el FIFO como solo lectura
         fifo = open(myfifo, O_RDONLY);
+        if (!fifo){
+			printf("Error MKFIFO\n");
+			exit(EXIT_FAILURE);
+		}
 
+	char prefix[lenEtiqueta];
+
+    while (1) {
        	if ( read(fifo, msj, sizeof(msj))<=0) {
-        	// perror("No se pudo leer en el FIFO\n"); 
+        	perror("No se pudo leer en el FIFO\n");
+			exit(EXIT_FAILURE);
 	 	} else {
 			// consigue la fecha y la hora
 			time_t t = time(NULL);
 			struct tm *tm = localtime(&t);  
 			strftime(fecha, sizeof(fecha), "%Y%m%d", tm);  // la formatea YYYYMMDD
-		
-	 		fpOut = fopen( outDir, "a");
+
+
+			strcpy(prefix,msj);
+
+			char * fileOutput = "";
+        	sprintf(fileOutput,"%s%s.txt", prefix, fecha);
+
+	 		fpOut = fopen( fileOutput, "a");
 		    if( fpOut == NULL){
-				// printf("ERROR, no se pudo abrir el directorio %s\n", outDir);
+				printf("ERROR, no se pudo abrir/crear el archivo %s\n", outDir);
 		        exit(EXIT_FAILURE);
 			}
-	 		
-        	sprintf(linea, "%s %s\n", fecha, msj);
-			fputs( linea, fpOut);	
-
+			fputs( msj, fpOut);	
 			fclose(fpOut);
 		}
+    }
         close(fifo);
 		unlink(myfifo);
-    }
 
 	exit(EXIT_SUCCESS);
 }

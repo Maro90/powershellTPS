@@ -117,6 +117,29 @@ void mandarPregunta(t_comunicacion);
 
 int main(int argc, char *argv []) {
 
+
+    if (argc != 2){
+        printf("Error en la llamada, utilice -h para recibir más información.\n");
+		exit(EXIT_FAILURE);
+    }
+
+	if (argc == 2 && (strcmp(argv[1], "-h") == 0  || strcmp(argv[1], "-?") == 0 || strcmp(argv[1], "-help") == 0) ){
+		//hacer cosas de get-help
+		printf("Modo de empleo: ./Servidor puerto \n");
+		printf("ejemplo de ejecucion: ./Servidor 10005 \n");
+		printf( " \n");
+		printf( "Servidor levanta el juego preguntanos ");
+		printf( "Posteriormente se deben levantar los clientes apuntando al mismo puerto y con la ip donde está corriendo el servidor.\n");
+		printf( "\n");
+		printf( " debe recibir como parametros: \n");
+		printf( "	    -obligatorio: puerto que se utilizará para la comunicación con el cliente.\n");
+		printf( "	    -opcional: h, -help muestra esta ayuda y finaliza \n");
+		printf( "\n" );
+		exit(0);
+	}
+
+    PUERTO = atoi(argv[1]);  //Puerto
+
     signal (SIGINT, desconectar);	//atiendo las signal
 	signal (SIGTERM, desconectar);	//atiendo las signal
 	signal (SIGALRM, handlerAlarma);
