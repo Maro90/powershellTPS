@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 
 #define PUERTO 10019
+//---------------------------------------------------------------------------------------------------
 
 
 typedef struct{
@@ -24,9 +25,16 @@ typedef struct{
     char respuestas[4][100];
 } t_comunicacion;
 
+//---------------------------------------------------------------------------------------------------
 
-void mostrarPregunta(t_comunicacion * comunicacion);
+int Socket_Con_Servidor;
 
+//---------------------------------------------------------------------------------------------------
+
+int mostrarPregunta(t_comunicacion * comunicacion);
+void iniciarJuego();
+
+//---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
 	char Cadena[100];
@@ -34,7 +42,9 @@ int main(int argc, char *argv []) {
 	struct sockaddr_in Direccion;
 	struct servent *Puerto;
 	struct hostent *Host;
-	int Socket_Con_Servidor;
+
+	printf("\tBienvenido a Preguntanos\n");
+	printf("Conectando con el server...\n");
 
 	Host = gethostbyname ("localhost");
 	if (Host == NULL)
@@ -55,6 +65,22 @@ int main(int argc, char *argv []) {
 		exit (-1);
 	}
 
+	printf("Conectado con el server\n");
+
+	char nombre[30];
+    printf("Ingrese su nombre: ");
+	gets(nombre);
+	
+	Escribe_Socket (Socket_Con_Servidor, &nombre, 30 * sizeof(char));
+
+	printf("Espere, en breve iniciarán las preguntas\n");
+
+	iniciarJuego();
+
+}
+//---------------------------------------------------------------------------------------------------
+
+void iniciarJuego(){
 	int nroPregunta = 0;
 	int jugando = 1;
 	t_comunicacion pregunta;
@@ -65,7 +91,11 @@ int main(int argc, char *argv []) {
 		printf("Pregunta %d\n seguir %d\n",nroPregunta, pregunta.seguir);
 	    printf("%s\n",pregunta.pregunta);
 
-		mostrarPregunta(&pregunta);
+		int respuesta = mostrarPregunta(&pregunta);
+		printf("Respuesta: %d",respuesta);
+		if (respuesta !=-1){
+			Escribe_Socket (Socket_Con_Servidor, &respuesta, sizeof(int));
+		}
 
 		if(pregunta.seguir == 0){
 			jugando = 0;
@@ -74,13 +104,14 @@ int main(int argc, char *argv []) {
 	printf("Salio y cierra socket\n");
 
 	close (Socket_Con_Servidor);
+
 }
 
 //---------------------------------------------------------------------------------------------------
 
-void mostrarPregunta(t_comunicacion * comunicacion){
+int mostrarPregunta(t_comunicacion * comunicacion){
 		if(comunicacion->seguir == 0){
-			return;
+			return -1;
 		}
         int respuesta = 0;
 	    printf("\n---------------------------------------------------------------------\n");
@@ -88,12 +119,12 @@ void mostrarPregunta(t_comunicacion * comunicacion){
         for(int i=0; i<4; i++){
             printf("RTA %d: %s\n",i+1,comunicacion->respuestas[i]);
         }
-        // printf("Ingrese la respuesta: ");
-	    // scanf("%d", &respuesta);
+        printf("Ingrese la respuesta: ");
+	    scanf("%d", &respuesta);
 	    // while (respuesta < 1 || respuesta > 4) { /* Se verifica la respuesta sea válida */
 		//     printf("Debe responder una de las opciones\n");
 		//     printf("Ingrese la respuesta: ");
 	    //     scanf("%d", &respuesta);
 	    // }
-        // escribeSocket (Socket_Con_Servidor, &respuesta, sizeof(int));
+		return respuesta;
 }
