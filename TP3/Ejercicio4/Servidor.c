@@ -327,9 +327,10 @@ void * atenderComunicaciones(void *arg){
 void registrarNuevoCliente(){
     int Socket_Cliente = 0;
 	struct sockaddr Cliente; 
-	socklen_t Longitud_Cliente; 
+	socklen_t Longitud_Cliente;
+    int len = sizeof(Cliente);
 
-	Socket_Cliente = accept (Socket_Servidor, &Cliente, &Longitud_Cliente);
+	Socket_Cliente = accept(Socket_Servidor, (struct sockaddr *)&Cliente, &len);
     if (Socket_Cliente == -1) {
         if (finalizo != 1)							
             printf ("No se puede abrir socket de cliente\n");

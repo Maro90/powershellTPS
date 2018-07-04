@@ -121,7 +121,9 @@ int main(int argc, char *argv []) {
 	t_respuesta_cliente respuesta;
 
     printf("Ingrese su nombre: ");
-	gets(respuesta.texto);
+	fflush( stdin );
+	fgets(respuesta.texto,100,stdin);
+	fflush( stdin );
 	respuesta.servicio = 1;
 	Escribe_Socket (Socket_Con_Servidor, &respuesta, sizeof(t_respuesta_cliente));
 
@@ -172,6 +174,7 @@ int mostrarPregunta(t_comunicacion * comunicacion){
         }
         printf("Ingrese la respuesta: ");
 	    scanf("%d", &respuesta);
+		fflush( stdin );
 	    // while (respuesta < 1 || respuesta > 4) { /* Se verifica la respuesta sea válida */
 		//     printf("Debe responder una de las opciones\n");
 		//     printf("Ingrese la respuesta: ");
