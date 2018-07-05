@@ -132,6 +132,11 @@ int main(int argc, char *argv []) {
     printf("Ingrese su nombre: ");
 	fflush( stdin );
 	fgets(respuesta.texto,100,stdin);
+
+	int i = strlen(respuesta.texto)-1;
+  	if( respuesta.texto[ i ] == '\n') 
+      	respuesta.texto[i] = '\0';
+
 	fflush( stdin );
 	respuesta.servicio = SERVICIO_NOMBRE_JUGADOR;
 	Escribe_Socket (Socket_Con_Servidor, &respuesta, sizeof(t_respuesta_cliente));
