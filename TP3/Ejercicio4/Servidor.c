@@ -33,6 +33,9 @@
 #define SERVICIO_PREGUNTA 2
 #define SERVICIO_TIEMPO 3
 
+#define TIEMPO_RESPUESTA 10
+#define TIEMPO_REGISTRO 10
+
 //---------------------------------------------------------------------------------------------------
 
 typedef struct pthread_list{
@@ -82,8 +85,8 @@ typedef struct{
 
 //---------------------------------------------------------------------------------------------------
 
-int tiempoParaRegistrarse = 10;//segundos
-int tiempoParaResponder = 250;
+int tiempoParaRegistrarse = TIEMPO_REGISTRO;//segundos
+int tiempoParaResponder = TIEMPO_RESPUESTA;
 
 int PUERTO = 10016;
 int registrando = 1;
@@ -162,13 +165,19 @@ int main(int argc, char *argv []) {
 	pthread_join(threadAlarma,NULL);
 
     printf("Se acabo el tiempo de registro\n");
-    iniciarJuego();
+
+    if(cantidadDeJugadores > 0){
+        iniciarJuego();
+    } else {
+        printf("No hay jugadores\n");
+        desconectar();
+    }
+
+    pthread_join(threadRegistro,NULL);
 
     if (threads_list != NULL) {
     	esperarThreads();
     }
-    pthread_join(threadRegistro,NULL);
-
 
 	close (Socket_Servidor);
     
@@ -384,6 +393,8 @@ void agregarJugadorALista(int socket){
         lista_clientes->socket = socket;
         lista_clientes->puntos = 0;
         lista_clientes->siguiente = NULL;
+        cantidadDeJugadores++;
+
         return;
     } 
     
@@ -454,7 +465,7 @@ void iniciarJuego(){
         hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
         mandarComunicacion(pregunta);
 	
-        tiempoParaResponder = 10;
+        tiempoParaResponder = TIEMPO_RESPUESTA;
         pthread_create(&threadAlarma2, NULL, FuncionAlarma2, 0);
 	    pthread_join(threadAlarma2,NULL);
 
@@ -523,6 +534,7 @@ void esperarThreads(){
 void desconectar (){
     printf ("\tCerrando el socket\n");
     pthread_cancel(threadAlarma);
+    pthread_cancel(threadAlarma2);
 
 	finalizo = 1;		//hago que se cierre la conexion
     jugando = 0;
