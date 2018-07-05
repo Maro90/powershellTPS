@@ -29,6 +29,12 @@
 #												#
 #################################################*/
 
+
+#define SERVICIO_FIN_JUEGO 0
+#define SERVICIO_NOMBRE_JUGADOR 1
+#define SERVICIO_PREGUNTA 2
+#define SERVICIO_TIEMPO 3
+
 //---------------------------------------------------------------------------------------------------
 
 typedef struct{
@@ -38,7 +44,7 @@ typedef struct{
 } t_respuesta_cliente;
 
 typedef struct{
-    int seguir;
+    int servicio;
     char pregunta[100];
     char respuestas[4][100];
 } t_comunicacion;
@@ -48,11 +54,14 @@ typedef struct{
 int Socket_Con_Servidor;
 int PUERTO = 10016;
 char ip[30];
+int respondio = 0;
+
+pthread_t   threadResponder;
 //---------------------------------------------------------------------------------------------------
 
 int mostrarPregunta(t_comunicacion * comunicacion);
 void iniciarJuego();
-
+void * responder(t_comunicacion * pregunta);
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -124,7 +133,7 @@ int main(int argc, char *argv []) {
 	fflush( stdin );
 	fgets(respuesta.texto,100,stdin);
 	fflush( stdin );
-	respuesta.servicio = 1;
+	respuesta.servicio = SERVICIO_NOMBRE_JUGADOR;
 	Escribe_Socket (Socket_Con_Servidor, &respuesta, sizeof(t_respuesta_cliente));
 
 	printf("Espere, en breve iniciarán las preguntas\n");
@@ -137,21 +146,34 @@ int main(int argc, char *argv []) {
 void iniciarJuego(){
 	int nroPregunta = 0;
 	int jugando = 1;
-	t_comunicacion pregunta;
-	t_respuesta_cliente resp;
+	t_comunicacion comunicacion;
 
 	while(jugando == 1){
-		Lee_Socket(Socket_Con_Servidor, &pregunta, sizeof(t_comunicacion));
-		nroPregunta++;
-		int respuesta = mostrarPregunta(&pregunta);
-		if (respuesta !=-1){
-			resp.servicio = 2;
-			resp.rta = respuesta;
-			Escribe_Socket (Socket_Con_Servidor, &resp, sizeof(t_respuesta_cliente));
-		}
+		Lee_Socket(Socket_Con_Servidor, &comunicacion, sizeof(t_comunicacion));
+		
+		switch(comunicacion.servicio){
+			case SERVICIO_PREGUNTA:	
+				nroPregunta++;
+				respondio = 0;
+    			pthread_create(&threadResponder, NULL, (void*)responder, (void*)&comunicacion);
 
-		if(pregunta.seguir == 0){
-			jugando = 0;
+				break;
+			
+			case SERVICIO_FIN_JUEGO:
+				jugando = 0;
+
+				break;
+
+			case SERVICIO_TIEMPO:
+				pthread_cancel(threadResponder);
+				if(respondio == 0){
+					printf("\n---------------------------------------------------------------------\n");
+					printf("\n\tTiempo agotado\n");
+					printf("Esperando siguiente pregunta\n");
+				}
+
+				break;
+
 		}
 	}
 	printf("Salio y cierra socket\n");
@@ -162,8 +184,25 @@ void iniciarJuego(){
 
 //---------------------------------------------------------------------------------------------------
 
+void * responder(t_comunicacion * pregunta){
+		t_respuesta_cliente resp;
+		system("clear");
+		int respuesta = mostrarPregunta(pregunta);
+		system("clear");
+		printf("Esperando siguiente pregunta\n");
+		respondio = 1;
+		if (respuesta !=-1){
+			resp.servicio = SERVICIO_PREGUNTA;
+			resp.rta = respuesta;
+			Escribe_Socket (Socket_Con_Servidor, &resp, sizeof(t_respuesta_cliente));
+		}
+
+	return NULL;
+}
+
+
 int mostrarPregunta(t_comunicacion * comunicacion){
-		if(comunicacion->seguir == 0){
+		if(comunicacion->servicio == SERVICIO_FIN_JUEGO){
 			return -1;
 		}
         int respuesta = 0;

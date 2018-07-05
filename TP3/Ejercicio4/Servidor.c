@@ -28,6 +28,11 @@
 #												#
 #################################################*/
 
+#define SERVICIO_FIN_JUEGO 0
+#define SERVICIO_NOMBRE_JUGADOR 1
+#define SERVICIO_PREGUNTA 2
+#define SERVICIO_TIEMPO 3
+
 //---------------------------------------------------------------------------------------------------
 
 typedef struct pthread_list{
@@ -62,7 +67,7 @@ typedef struct pregunta{
 //----------------------------
 
 typedef struct{
-    int seguir;
+    int servicio;
     char pregunta[100];
     char respuestas[4][100];
 } t_comunicacion;
@@ -77,8 +82,8 @@ typedef struct{
 
 //---------------------------------------------------------------------------------------------------
 
-int tiempoParaRegistrarse = 25;//segundos
-int tiempoParaResponder = 5;
+int tiempoParaRegistrarse = 10;//segundos
+int tiempoParaResponder = 250;
 
 int PUERTO = 10016;
 int registrando = 1;
@@ -88,6 +93,7 @@ int finalizo = 0;
 int cantidadDeJugadores = 0;
 
 pthread_t   threadAlarma;
+pthread_t   threadAlarma2;
 pthread_t   threadRegistro;
 
 t_clientes *    lista_clientes = NULL;
@@ -106,13 +112,15 @@ int inicializar();
 int abrirArchivoDePreguntas();
 int levantarServer();
 void *FuncionAlarma(void *arg);
+void *FuncionAlarma2(void *arg);
 void handlerAlarma(int sig);
+void handlerAlarma2(int sig);
 void iniciarJuego();
 void agregarJugadorALista(int socket);
 void borrarJugador(int descriptor);
 void * atenderComunicaciones(void *arg);
 void registrarNuevoCliente();
-void mandarPregunta(t_comunicacion);
+void mandarComunicacion(t_comunicacion comunicacion);
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -199,6 +207,15 @@ void *FuncionAlarma(void *arg){
 		sleep(1); 
 	}
 }
+
+void *FuncionAlarma2(void *arg){
+	signal(SIGALRM, handlerAlarma2);
+	while(jugando){
+		alarm(1); 
+		sleep(1); 
+	}
+}
+
 //---------------------------------------------------------------------------------------------------
 
 void handlerAlarma(int sig){
@@ -208,6 +225,14 @@ void handlerAlarma(int sig){
         jugando = 1;
     } else {
         tiempoParaRegistrarse--;
+    }
+}
+
+void handlerAlarma2(int sig){
+    if (tiempoParaResponder  == 0){
+        pthread_cancel(threadAlarma2);
+    } else {
+        tiempoParaResponder--;
     }
 }
 
@@ -291,12 +316,12 @@ void * atenderComunicaciones(void *arg){
                 t_respuesta_cliente respuesta;
 				if ((Lee_Socket(pSockets2->socket, &respuesta, sizeof(t_respuesta_cliente)) > 0)) {
                     switch(respuesta.servicio){
-                        case 1:
+                        case SERVICIO_NOMBRE_JUGADOR:
                             //Nombre del jugador
                             printf("%s se unió a la partida\n", respuesta.texto);
                             strcpy(pSockets2->nombre,respuesta.texto);
                             break;
-                        case 2:
+                        case SERVICIO_PREGUNTA:
                             //Respuesta a la pregunta
                             printf("%s respondio %d\n", pSockets2->nombre, respuesta.rta);
 
@@ -422,32 +447,40 @@ void iniciarJuego(){
     printf("A JUGAR\n");
     int hayMasPreguntas = 1;
 	t_comunicacion pregunta;
-    pregunta.seguir = 1;
+    pregunta.servicio = SERVICIO_PREGUNTA;
     int respuesta;
 
     while(jugando && hayMasPreguntas ) {
         hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
-        mandarPregunta(pregunta);
-        sleep(tiempoParaResponder); 
+        mandarComunicacion(pregunta);
+	
+        tiempoParaResponder = 10;
+        pthread_create(&threadAlarma2, NULL, FuncionAlarma2, 0);
+	    pthread_join(threadAlarma2,NULL);
+
+        printf("Tiempo agotado, siguiente pregunta \n");
+        pregunta.servicio = SERVICIO_TIEMPO;
+        mandarComunicacion(pregunta);
+        sleep(8);
+
         nroPregunta++;
     }
     
-    pregunta.seguir = 0;
-    mandarPregunta(pregunta);
+    pregunta.servicio = SERVICIO_FIN_JUEGO;
+    mandarComunicacion(pregunta);
 }
 
 //---------------------------------------------------------------------------------------------------
 /*
-*   Se encarga de atender a los clientes.
+*   Se encarga de mandar la info a todos los clientes.
 *
 */
 
-void mandarPregunta(t_comunicacion pregunta){
-    t_clientes * clientes = lista_clientes;
-    int mayorDescriptor = 0;
-        
+void mandarComunicacion(t_comunicacion comunicacion){
+    t_clientes * clientes = lista_clientes; 
+
     while(clientes != NULL){
-        Escribe_Socket (clientes->socket, &pregunta, sizeof(t_comunicacion));
+        Escribe_Socket (clientes->socket, &comunicacion, sizeof(t_comunicacion));
         clientes = clientes->siguiente;
     }
 }
@@ -683,7 +716,7 @@ int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta){
     }
 
     if (pLista==NULL){
-        pregunta->seguir = 0;
+        pregunta->servicio = SERVICIO_FIN_JUEGO;
         return 0;
     }
 
@@ -691,5 +724,6 @@ int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta){
     for(int i = 0; i < 4; i++){
         strcpy(pregunta->respuestas[i],pLista->respuestas[i]);
     }
+    pregunta->servicio = SERVICIO_PREGUNTA;
     return 1;
 }
