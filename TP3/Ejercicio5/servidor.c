@@ -84,16 +84,23 @@ void init(){
 	printf("Server iniciado ok\n");
 }
 
-void encryptDecrypt(char m[]){
+void encryptDecrypt(char m[],int operation){
+	int offset;
+	if(operation==1){
+		offset=1;
+	}else{
+		offset=-1;
+	}
 	for(int i=0; i< strlen(m);i++){
-		m[i] = m[i] ^ 'K';
+		m[i] = m[i] +offset;
 	}
 }
 
 void processMessage(){
-	printf("Ingreso message: %s operation: %d\n",message->text,message->operation);
+	printf("Ingreso message: (%s) operation: (%d)\n",message->text,message->operation);
+	encryptDecrypt(message->text,message->operation);
+
 	message->operation=0;
-	encryptDecrypt(message->text);
 	mutexUnlock(locks[CRIPTEDLOCK]);
 	if(mutexLock(locks[DELETELOCK],TIMEOUT_DEFAULT)){
 		printf("Cliente no respondio a tiempo.\n");

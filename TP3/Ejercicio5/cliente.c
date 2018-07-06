@@ -56,7 +56,8 @@ int main(int argc, char *const argv[]){
 		type=(int)*argv[2] - 48;
 	}else{
 		printf("Ingrese texto:");
-		scanf("%s",messageInput);
+		fgets(messageInput, 100, stdin);
+		messageInput[strlen(messageInput) - 1]='\0';
 		printf("1 - Encriptar, 2 Desencriptar:");
 		fseek(stdin,0,SEEK_END);
 		scanf(" %d",&type);
