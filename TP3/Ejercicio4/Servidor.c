@@ -185,6 +185,7 @@ int main(int argc, char *argv []) {
 	// mostrarGanadores();
 
     mandarResultadosFinales();
+    desconectar();
 
     pthread_join(threadRegistro,NULL);
 
@@ -451,6 +452,11 @@ void borrarJugador(int descriptor){
         printf("No encontro ese cliente");
     }
     cantidadDeJugadores--;
+    if(jugando == 1 && cantidadDeJugadores < 1){
+        printf("Se desconectaron los jugadores, abortando juego\n");
+        desconectar();
+        return;
+    }
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -471,11 +477,11 @@ void iniciarJuego(){
     pregunta.servicio = SERVICIO_PREGUNTA;
     int respuesta;
 
-    while(jugando && hayMasPreguntas ) {
+    while(jugando && hayMasPreguntas && cantidadDeJugadores > 0) {
         hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
 
         if(hayMasPreguntas == 1){
-                    mandarComunicacion(pregunta, nroPregunta);
+            mandarComunicacion(pregunta, nroPregunta);
 	
             tiempoParaResponder = TIEMPO_RESPUESTA;
             pthread_create(&threadAlarma2, NULL, FuncionAlarma2, 0);
@@ -490,8 +496,10 @@ void iniciarJuego(){
 
         }
     }
+    if( cantidadDeJugadores < 1) {
+        return;
+    }
     
-
     pregunta.servicio = SERVICIO_FIN_PREGUNTAS;
     mandarComunicacion(pregunta,nroPregunta);
 
@@ -526,16 +534,14 @@ void mandarComunicacion(t_comunicacion comunicacion, int nroPreg){
  */
 
 void desconectar (){
-    printf ("\tCerrando el socket\n");
     pthread_cancel(threadAlarma);
     pthread_cancel(threadAlarma2);
+    pthread_cancel(threadRegistro);
 
 	finalizo = 1;		//hago que se cierre la conexion
     jugando = 0;
     close (Socket_Servidor);	//cierro el socket del servidor
 }
-
-
 
 //---------------------------------------------------------------------------------------------------
 /*
@@ -662,7 +668,6 @@ int abrirArchivoDePreguntas() {
     //         punteroLista = punteroLista->siguiente;
     // }
 }
-
 
 //---------------------------------------------------------------------------------------------------
 /*

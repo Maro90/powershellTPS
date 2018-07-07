@@ -196,7 +196,8 @@ void iniciarJuego(){
 
 		}
 	}
-	printf("Salio y cierra socket\n");
+	printf("Finalizo el juego.\n");
+	printf("Salio y cierra socket\n\n");
 
 	close (Socket_Con_Servidor);
 
