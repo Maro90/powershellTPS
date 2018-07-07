@@ -32,18 +32,12 @@
 #define SERVICIO_NOMBRE_JUGADOR 1
 #define SERVICIO_PREGUNTA 2
 #define SERVICIO_TIEMPO 3
+#define SERVICIO_FIN_PREGUNTAS 4
 
 #define TIEMPO_RESPUESTA 10
 #define TIEMPO_REGISTRO 10
 
 //---------------------------------------------------------------------------------------------------
-
-typedef struct pthread_list{
-    pthread_t               tid;
-    struct pthread_list *   siguiente;
-} t_pthread_list;
-
-//----------------------------
 
 typedef struct {
     int               socket;
@@ -83,6 +77,12 @@ typedef struct{
     char texto[30];
 } t_respuesta_cliente;
 
+typedef struct{
+    int ultimo;
+    int puntaje;
+    char nombre[100];
+} t_comunicacion_resultados;
+
 //---------------------------------------------------------------------------------------------------
 
 int tiempoParaRegistrarse = TIEMPO_REGISTRO;//segundos
@@ -104,7 +104,6 @@ pthread_t   threadRegistro;
 t_clientes *	lista_ganadores = NULL;
 t_clientes *    lista_clientes = NULL;
 t_pregunta *    lista_preguntas = NULL;
-t_pthread_list * threads_list = NULL;
 
 fd_set descriptoresLectura;	/* Descriptores de interes para select() */
 
@@ -131,7 +130,8 @@ void mandarComunicacion(t_comunicacion comunicacion, int nroPreg);
 void agregarGanador(t_clientes * winner);
 void determinarGanadores();
 void mostrarGanadores();
-
+void mandarResultadosFinales();
+void mandarResultado(t_comunicacion_resultados comunicacion);
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -180,16 +180,14 @@ int main(int argc, char *argv []) {
         printf("No hay jugadores\n");
         desconectar();
     }
+	
+	// determinarGanadores();
+	// mostrarGanadores();
+
+    mandarResultadosFinales();
 
     pthread_join(threadRegistro,NULL);
 
-    if (threads_list != NULL) {
-    	esperarThreads();
-    }
-	
-	//determinarGanadores();
-	//mostrarGanadores();
-	
 	close (Socket_Servidor);
     
 	printf("Finalizado el juego.\n");
@@ -199,14 +197,6 @@ int main(int argc, char *argv []) {
 //---------------------------------------------------------------------------------------------------
 
 int inicializar(){
-
-    threads_list = malloc(sizeof(t_pthread_list));
-	if(threads_list == NULL){
-        	printf("Error, no hay mas memoria\n");
-		return EXIT_FAILURE;
-	}
-
-
 
     if (abrirArchivoDePreguntas() == 0 ) {
         return 0;
@@ -483,22 +473,30 @@ void iniciarJuego(){
 
     while(jugando && hayMasPreguntas ) {
         hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
-        mandarComunicacion(pregunta, nroPregunta);
+
+        if(hayMasPreguntas == 1){
+                    mandarComunicacion(pregunta, nroPregunta);
 	
-        tiempoParaResponder = TIEMPO_RESPUESTA;
-        pthread_create(&threadAlarma2, NULL, FuncionAlarma2, 0);
-	    pthread_join(threadAlarma2,NULL);
+            tiempoParaResponder = TIEMPO_RESPUESTA;
+            pthread_create(&threadAlarma2, NULL, FuncionAlarma2, 0);
+	        pthread_join(threadAlarma2,NULL);
 
-        printf("Tiempo agotado, siguiente pregunta \n");
-        pregunta.servicio = SERVICIO_TIEMPO;
-        mandarComunicacion(pregunta, 0);
-        sleep(8);
+            printf("Tiempo agotado, siguiente pregunta \n");
+            pregunta.servicio = SERVICIO_TIEMPO;
+            mandarComunicacion(pregunta, 0);
+            sleep(8);   //Tiempo entre pregunta y pregunta.
 
-        nroPregunta++;
+            nroPregunta++;
+
+        }
     }
     
-    pregunta.servicio = SERVICIO_FIN_JUEGO;
+
+    pregunta.servicio = SERVICIO_FIN_PREGUNTAS;
     mandarComunicacion(pregunta,nroPregunta);
+
+    // pregunta.servicio = SERVICIO_FIN_JUEGO;
+    // mandarComunicacion(pregunta,nroPregunta);
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -520,36 +518,6 @@ void mandarComunicacion(t_comunicacion comunicacion, int nroPreg){
         Escribe_Socket (clientes->socket, &comunicacion, sizeof(t_comunicacion));
         clientes = clientes->siguiente;
     }
-}
-
-//---------------------------------------------------------------------------------------------------
-/*
-*   Se encarga de esperar los threads de la lista.
-*
-*/
-void esperarThreads(){
-    int i =0;
-    t_pthread_list * aux = NULL;
-    
-    printf("Espera los threads\n");
-
-    pthread_t tid = 0;			//mediante la lista de threads ID voy recorriendo y revisando que hayan finalizado
-    
-    while (threads_list != NULL) {
-        tid = threads_list->tid;
-        
-        aux = threads_list;
-        if(aux->siguiente != NULL){
-            threads_list = aux->siguiente;
-        }else{
-            threads_list = NULL;
-	    }
-	    if(tid!=0) {
-            pthread_join(tid, NULL);	//espero la finalizacion del thread
-        }   
-        free(aux);			//libero la memoria que utlizo la lista
-    }
-    return;
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -754,7 +722,7 @@ int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta){
     }
 
     if (pLista==NULL){
-        pregunta->servicio = SERVICIO_FIN_JUEGO;
+        pregunta->servicio = SERVICIO_FIN_PREGUNTAS;
         return 0;
     }
 
@@ -885,4 +853,34 @@ void agregarGanador(t_clientes * winner){
     if(pclAnterior) {
         pclAnterior->siguiente = pcl;
     }     
+}
+
+
+void mandarResultadosFinales(){
+    t_comunicacion_resultados comunicacion;
+    t_clientes * p = lista_clientes;
+
+    while(p != NULL){
+        strcpy(comunicacion.nombre,p->nombre);
+        comunicacion.puntaje = p->puntos;
+        if(p->siguiente == NULL){
+            comunicacion.ultimo = 1;
+        } else {
+            comunicacion.ultimo = 0;
+        }
+
+        mandarResultado(comunicacion);
+        p = p->siguiente;
+    
+    }
+}
+
+void mandarResultado(t_comunicacion_resultados comunicacion){
+    t_clientes * clientes = lista_clientes; 
+	
+	
+    while(clientes != NULL){
+        Escribe_Socket (clientes->socket, &comunicacion, sizeof(t_comunicacion_resultados));
+        clientes = clientes->siguiente;
+    }
 }

@@ -34,6 +34,7 @@
 #define SERVICIO_NOMBRE_JUGADOR 1
 #define SERVICIO_PREGUNTA 2
 #define SERVICIO_TIEMPO 3
+#define SERVICIO_FIN_PREGUNTAS 4
 
 //---------------------------------------------------------------------------------------------------
 
@@ -49,6 +50,13 @@ typedef struct{
     char respuestas[4][100];
 } t_comunicacion;
 
+typedef struct{
+    int ultimo;
+    int puntaje;
+    char nombre[100];
+} t_comunicacion_resultados;
+
+
 //---------------------------------------------------------------------------------------------------
 
 int Socket_Con_Servidor;
@@ -62,6 +70,7 @@ pthread_t   threadResponder;
 int mostrarPregunta(t_comunicacion * comunicacion);
 void iniciarJuego();
 void * responder(t_comunicacion * pregunta);
+void mostrarResultados();
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -178,6 +187,12 @@ void iniciarJuego(){
 				}
 
 				break;
+			
+			case SERVICIO_FIN_PREGUNTAS:
+				//Dejo de leer preguntas, espero listado de jugadores
+				system("clear");
+				mostrarResultados();
+				jugando = 0;
 
 		}
 	}
@@ -225,4 +240,24 @@ int mostrarPregunta(t_comunicacion * comunicacion){
 	    //     scanf("%d", &respuesta);
 	    // }
 		return respuesta;
+}
+
+void mostrarResultados(){
+	int hayMas = 1;
+	
+	printf("*******************************************************\n");
+    printf("Resultados:\n\n");
+
+	while(hayMas == 1){
+		t_comunicacion_resultados comunicacion;
+		Lee_Socket(Socket_Con_Servidor, &comunicacion, sizeof(t_comunicacion_resultados));
+		
+		printf("Nombre: %s\tPuntaje: %d\n", comunicacion.nombre, comunicacion.puntaje);
+
+		if (comunicacion.ultimo == 1){ //Cuando mande el ultimo dejo de esperar resultados.
+			hayMas = 0;
+		}
+	}
+	printf("\n*******************************************************\n");
+
 }
