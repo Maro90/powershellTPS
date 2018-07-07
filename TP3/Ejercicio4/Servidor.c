@@ -344,18 +344,16 @@ void * atenderComunicaciones(void *arg){
                         case SERVICIO_PREGUNTA:
                             //Respuesta a la pregunta
                             printf("%s respondio %d\n", pSockets2->nombre, respuesta.rta);
-							// if(respPrimero == 1){
+							if(respPrimero == 1){
 								if(respuesta.rta == (respActual+1)){
-                                    printf("CoRRECTA\n");
 									pSockets2->puntos++;
+								}else if(respuesta.rta != -2){
+									pSockets2->puntos--;
 								}
-                                // else if(respuesta.rta != -2){
-								// 	pSockets2->puntos--;
-								// }
 								// SI QUIERO QUE CONTESTE 1 BIEN SI O SI, LO PONGO EN EL IF DE RTA CORRECTA, Y A LOS
 								// QUE CONTESTA MAL LES RESTA 1, Y SIEMPRE A UNO LE VA A SUMAR
 								respPrimero = 0;
-                            // }
+                            }
                             break;
                         default:
                             break;
