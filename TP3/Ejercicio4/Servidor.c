@@ -94,11 +94,14 @@ int jugando = 0;
 int Socket_Servidor = 0;
 int finalizo = 0;
 int cantidadDeJugadores = 0;
+int respActual = 0;
+int respPrimero = 1;
 
 pthread_t   threadAlarma;
 pthread_t   threadAlarma2;
 pthread_t   threadRegistro;
 
+t_clientes *	lista_ganadores = NULL;
 t_clientes *    lista_clientes = NULL;
 t_pregunta *    lista_preguntas = NULL;
 t_pthread_list * threads_list = NULL;
@@ -107,6 +110,7 @@ fd_set descriptoresLectura;	/* Descriptores de interes para select() */
 
 //---------------------------------------------------------------------------------------------------
 
+void mostrarResultados();
 void desconectar ();
 int agregarPreguntaALista(char * pregunta, char * respuestas[], int respuestaCorrecta);
 void esperarThreads();
@@ -123,7 +127,11 @@ void agregarJugadorALista(int socket);
 void borrarJugador(int descriptor);
 void * atenderComunicaciones(void *arg);
 void registrarNuevoCliente();
-void mandarComunicacion(t_comunicacion comunicacion);
+void mandarComunicacion(t_comunicacion comunicacion, int nroPreg);
+void agregarGanador(t_clientes * winner);
+void determinarGanadores();
+void mostrarGanadores();
+
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -178,7 +186,10 @@ int main(int argc, char *argv []) {
     if (threads_list != NULL) {
     	esperarThreads();
     }
-
+	
+	//determinarGanadores();
+	//mostrarGanadores();
+	
 	close (Socket_Servidor);
     
 	printf("Finalizado el juego.\n");
@@ -333,7 +344,18 @@ void * atenderComunicaciones(void *arg){
                         case SERVICIO_PREGUNTA:
                             //Respuesta a la pregunta
                             printf("%s respondio %d\n", pSockets2->nombre, respuesta.rta);
-
+							// if(respPrimero == 1){
+								if(respuesta.rta == (respActual+1)){
+                                    printf("CoRRECTA\n");
+									pSockets2->puntos++;
+								}
+                                // else if(respuesta.rta != -2){
+								// 	pSockets2->puntos--;
+								// }
+								// SI QUIERO QUE CONTESTE 1 BIEN SI O SI, LO PONGO EN EL IF DE RTA CORRECTA, Y A LOS
+								// QUE CONTESTA MAL LES RESTA 1, Y SIEMPRE A UNO LE VA A SUMAR
+								respPrimero = 0;
+                            // }
                             break;
                         default:
                             break;
@@ -426,7 +448,7 @@ void agregarJugadorALista(int socket){
 
 void borrarJugador(int descriptor){
     t_clientes * pcl = lista_clientes;
-    t_clientes * pclAnterior = NULL;		
+    t_clientes * pclAnterior = pcl;		
     
     while(pcl != NULL && pcl->socket != descriptor){
         pclAnterior = pcl;
@@ -463,7 +485,7 @@ void iniciarJuego(){
 
     while(jugando && hayMasPreguntas ) {
         hayMasPreguntas = obtenerSiguientePregunta(&pregunta, nroPregunta);
-        mandarComunicacion(pregunta);
+        mandarComunicacion(pregunta, nroPregunta);
 	
         tiempoParaResponder = TIEMPO_RESPUESTA;
         pthread_create(&threadAlarma2, NULL, FuncionAlarma2, 0);
@@ -471,14 +493,14 @@ void iniciarJuego(){
 
         printf("Tiempo agotado, siguiente pregunta \n");
         pregunta.servicio = SERVICIO_TIEMPO;
-        mandarComunicacion(pregunta);
+        mandarComunicacion(pregunta, 0);
         sleep(8);
 
         nroPregunta++;
     }
     
     pregunta.servicio = SERVICIO_FIN_JUEGO;
-    mandarComunicacion(pregunta);
+    mandarComunicacion(pregunta,nroPregunta);
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -487,9 +509,15 @@ void iniciarJuego(){
 *
 */
 
-void mandarComunicacion(t_comunicacion comunicacion){
+void mandarComunicacion(t_comunicacion comunicacion, int nroPreg){
     t_clientes * clientes = lista_clientes; 
-
+	
+	if(nroPreg != 0){
+        // Muestro resultado Parcial
+        mostrarResultados();
+		respPrimero = 1;
+    }
+	
     while(clientes != NULL){
         Escribe_Socket (clientes->socket, &comunicacion, sizeof(t_comunicacion));
         clientes = clientes->siguiente;
@@ -737,5 +765,126 @@ int obtenerSiguientePregunta(t_comunicacion * pregunta, int nroPregunta){
         strcpy(pregunta->respuestas[i],pLista->respuestas[i]);
     }
     pregunta->servicio = SERVICIO_PREGUNTA;
+	respActual = pLista->rc;
     return 1;
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void mostrarResultados(){
+    t_clientes * p = lista_clientes;
+
+    if(p){
+        printf("*******************************************************\n");
+        printf("Resultados Parciales:\n\n");
+    }
+
+    while(p){
+        printf("Nombre: %s\tPuntuación: %d\n", p->nombre, p->puntos);
+        p = p->siguiente;
+    }
+    printf("*******************************************************\n");
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void mostrarGanadores(){
+    t_clientes * p = lista_ganadores;
+
+    if(p){
+        printf("*******************************************************\n");
+        printf("Ganadores:\n\n");
+    }
+
+    while(p){
+        printf("Nombre: %s\tPuntuación: %d\n", p->nombre, p->puntos);
+        p = p->siguiente;
+    }
+    printf("*******************************************************\n");
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void determinarGanadores(){
+    t_clientes * p = lista_clientes;
+	t_clientes * buscarMas = lista_clientes;
+	t_clientes maximo;
+	
+	// Establezco el primero como máximo
+	strcpy(maximo.nombre, p->nombre);
+	maximo.socket = p->socket;
+	maximo.puntos = p->puntos;
+	
+	// Muevo el puntero al segundo
+	if(p->siguiente != NULL){
+		p = p->siguiente;
+	}
+	
+	// Si hay más de 1 jugador, busco entre los demás cual es el de máximo puntaje
+    while(p){
+        if(maximo.puntos < p->puntos){
+			// Hay otro de mayor puntaje
+			strcpy(maximo.nombre, p->nombre);
+			maximo.socket = p->socket;
+			maximo.puntos = p->puntos;
+		}
+        p = p->siguiente;
+    }
+	
+	agregarGanador(&maximo);
+	
+	// Ahora me fijo si hay más de uno con el mismo puntaje
+	while(buscarMas){
+		if(maximo.puntos == buscarMas->puntos){
+			// Hay otro de mayor puntaje
+			strcpy(maximo.nombre, buscarMas->nombre);
+			maximo.socket = buscarMas->socket;
+			maximo.puntos = buscarMas->puntos;
+			agregarGanador(&maximo);
+		}
+        buscarMas = buscarMas->siguiente;
+	}
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void agregarGanador(t_clientes * winner){
+    t_clientes * pcl = lista_ganadores;
+    t_clientes * pclAnterior = NULL;		
+    
+    if ( lista_ganadores == NULL ){
+        lista_ganadores = malloc(sizeof(t_clientes));
+	    if(lista_ganadores == NULL){
+	        printf("Error, no hay mas memoria\n");
+            desconectar();
+            exit(EXIT_FAILURE);
+	    }
+		
+        lista_ganadores->socket = winner->socket;
+        lista_ganadores->puntos = winner->puntos;
+        lista_ganadores->siguiente = NULL;
+
+        return;
+    } 
+    
+    while(pcl != NULL ){
+        pclAnterior = pcl;
+        pcl = pcl->siguiente;
+    }
+
+    if (pcl == NULL) {
+	    pcl = malloc(sizeof(t_clientes));
+	    if(pcl == NULL){
+	        printf("Error, no hay mas memoria\n");
+            exit(EXIT_FAILURE);
+	    }
+	}
+    
+    pcl->socket = winner->socket;
+    pcl->puntos = winner->puntos;
+    pcl->siguiente = NULL;
+        
+    if(pclAnterior) {
+        pclAnterior->siguiente = pcl;
+    }     
 }
