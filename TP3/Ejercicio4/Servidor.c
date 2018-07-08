@@ -132,6 +132,7 @@ void determinarGanadores();
 void mostrarGanadores();
 void mandarResultadosFinales();
 void mandarResultado(t_comunicacion_resultados comunicacion);
+void ordenarListaPorPuntaje();
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -185,13 +186,15 @@ int main(int argc, char *argv []) {
         desconectar();
     }
 	
-	// determinarGanadores();
-	// mostrarGanadores();
 
     mandarResultadosFinales();
-    desconectar();
+
+    determinarGanadores();
+	mostrarGanadores();
+
 
     pthread_join(threadRegistro,NULL);
+    desconectar();
 
 	close (Socket_Servidor);
     
@@ -223,6 +226,8 @@ void *FuncionAlarma(void *arg){
 	}
 }
 
+//---------------------------------------------------------------------------------------------------
+
 void *FuncionAlarma2(void *arg){
 	signal(SIGALRM, handlerAlarma2);
 	while(jugando){
@@ -242,6 +247,8 @@ void handlerAlarma(int sig){
         tiempoParaRegistrarse--;
     }
 }
+
+//---------------------------------------------------------------------------------------------------
 
 void handlerAlarma2(int sig){
     if (tiempoParaResponder  == 0){
@@ -522,6 +529,7 @@ void mandarComunicacion(t_comunicacion comunicacion, int nroPreg){
 	
 	if(nroPreg != 0){
         // Muestro resultado Parcial
+        ordenarListaPorPuntaje();
         mostrarResultados();
 		respPrimero = 1;
     }
@@ -810,7 +818,7 @@ void determinarGanadores(){
 	
 	// Ahora me fijo si hay más de uno con el mismo puntaje
 	while(buscarMas){
-		if(maximo.puntos == buscarMas->puntos){
+		if(maximo.puntos == buscarMas->puntos && maximo.socket != buscarMas->socket){
 			// Hay otro de mayor puntaje
 			strcpy(maximo.nombre, buscarMas->nombre);
 			maximo.socket = buscarMas->socket;
@@ -836,6 +844,7 @@ void agregarGanador(t_clientes * winner){
 	    }
 		
         lista_ganadores->socket = winner->socket;
+		strcpy(lista_ganadores->nombre, winner->nombre);
         lista_ganadores->puntos = winner->puntos;
         lista_ganadores->siguiente = NULL;
 
@@ -856,6 +865,7 @@ void agregarGanador(t_clientes * winner){
 	}
     
     pcl->socket = winner->socket;
+    strcpy(lista_ganadores->nombre, winner->nombre);
     pcl->puntos = winner->puntos;
     pcl->siguiente = NULL;
         
@@ -864,6 +874,7 @@ void agregarGanador(t_clientes * winner){
     }     
 }
 
+//---------------------------------------------------------------------------------------------------
 
 void mandarResultadosFinales(){
     t_comunicacion_resultados comunicacion;
@@ -884,6 +895,8 @@ void mandarResultadosFinales(){
     }
 }
 
+//---------------------------------------------------------------------------------------------------
+
 void mandarResultado(t_comunicacion_resultados comunicacion){
     t_clientes * clientes = lista_clientes; 
 	
@@ -892,4 +905,38 @@ void mandarResultado(t_comunicacion_resultados comunicacion){
         Escribe_Socket (clientes->socket, &comunicacion, sizeof(t_comunicacion_resultados));
         clientes = clientes->siguiente;
     }
+}
+
+//---------------------------------------------------------------------------------------------------
+
+void ordenarListaPorPuntaje() {
+     t_clientes * actual , * siguiente;
+     int t;
+     int extS;
+     char ext[100];
+     actual = lista_clientes;
+     while(actual->siguiente != NULL) {
+          siguiente = actual->siguiente;
+          
+          while(siguiente!=NULL) {
+               if(actual->puntos < siguiente->puntos) {
+
+                    t = siguiente->puntos;
+                    siguiente->puntos = actual->puntos;
+                    actual->puntos = t;   
+
+                    extS = siguiente->socket;
+                    siguiente->socket = actual->socket;
+                    actual->socket = extS;   
+
+                    strcpy(ext,siguiente->nombre);
+                    strcpy(siguiente->nombre,actual->nombre);
+                    strcpy(actual->nombre,ext);
+
+               }
+               siguiente = siguiente->siguiente;                    
+          }    
+          actual = actual->siguiente;
+          siguiente = actual->siguiente;      
+     }
 }
