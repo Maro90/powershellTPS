@@ -136,6 +136,10 @@ void mandarResultado(t_comunicacion_resultados comunicacion);
 
 int main(int argc, char *argv []) {
 
+    char hostName[100];
+    gethostname(hostName,100);
+    printf("\n\tPreguntanos en hostname: %s\n\n",hostName);
+
 
     if (argc != 2){
         printf("Error en la llamada, utilice -h para recibir más información.\n");

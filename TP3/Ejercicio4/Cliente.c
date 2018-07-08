@@ -61,7 +61,6 @@ typedef struct{
 
 int Socket_Con_Servidor;
 int PUERTO = 10016;
-char ip[30];
 int respondio = 0;
 
 pthread_t   threadResponder;
@@ -75,36 +74,31 @@ void mostrarResultados();
 
 int main(int argc, char *argv []) {
 
-
-
-    if (argc < 2){
-        printf("Error en la llamada, utilice -h para recibir más información.\n");
-		exit(EXIT_FAILURE);
-    }
-
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0  || strcmp(argv[1], "-?") == 0 || strcmp(argv[1], "-help") == 0) ){
 		//hacer cosas de get-help
-		printf("Modo de empleo: ./Cliente ip puerto \n");
-		printf("ejemplo de ejecucion localmente: ./Cliente 127.0.0.1 10005 \n");
+		printf("Modo de empleo: ./Cliente -i ip puerto \n");
+		printf("Modo de empleo2: ./Cliente -m hostname puerto \n");
+		printf("ejemplo de ejecucion localmente: ./Cliente -i 127.0.0.1 10005 \n");
+		printf("ejemplo de ejecucion localmente: ./Cliente -h mimaquinahost 10005 \n");
 		printf( " \n");
 		printf( "Cliente levanta el juego para conectarse a preguntanos ");
 		printf( "\n");
 		printf( " debe recibir como parametros: \n");
-		printf( "	    -obligatorio: IP que se utilizará para la comunicación con el server.\n");
+		printf( "	    -obligatorio: -i IP que se utilizará para la comunicación con el server.\n");
+		printf( "	    -obligatorio: -m Hostname que se utilizará para la comunicación con el server.\n");
 		printf( "	    -obligatorio: PUERTO que se utilizará para la comunicación con el server.\n");
 		printf( "	    -opcional: h, -help muestra esta ayuda y finaliza \n");
 		printf( "\n" );
 		exit(0);
 	}
 
-	if( argc < 2){
+	if( argc < 4){
 		printf("Error, debe pasar la IP y el PUERTO del servidor por parámetro\n");
 		printf("Error en la llamada, utilice -h para recibir más información.\n");
-		return -1;
+		exit(EXIT_FAILURE);
 	}
 
-	strcpy(ip,argv[1]);			//IP
-    PUERTO = atoi(argv[2]);  //Puerto
+    PUERTO = atoi(argv[3]);  //Puerto
 
 	char Cadena[100];
 
@@ -112,17 +106,26 @@ int main(int argc, char *argv []) {
 	struct servent *Puerto;
 	struct hostent *Host;
 
+	if(strcmp(argv[1], "-m") == 0){	//Asignacion con nombre de host
+  		Host = gethostbyname(argv[2]); 
+		if (Host == NULL){
+			printf("Error en el nombre del server");
+			return(EXIT_FAILURE);
+		}
+
+		Direccion.sin_addr.s_addr = ((struct in_addr *)(Host->h_addr))->s_addr;
+
+
+	} else if(strcmp(argv[1], "-i") == 0) {	//Asignacion con ip de host
+		Direccion.sin_addr.s_addr = inet_addr(argv[2]);
+
+	}
+
 	printf("\tBienvenido a Preguntanos\n");
 	printf("Conectando con el server...\n");
 
-	Host = gethostbyname ("localhost");
-	if (Host == NULL)
-		return -1;
-
 	Direccion.sin_family = AF_INET;
-	// Direccion.sin_addr.s_addr = ((struct in_addr *)(Host->h_addr))->s_addr;
 	Direccion.sin_port = htons(PUERTO);
-	Direccion.sin_addr.s_addr = inet_addr(argv[1]);
 
 	
 	Socket_Con_Servidor = socket (AF_INET, SOCK_STREAM, 0);
