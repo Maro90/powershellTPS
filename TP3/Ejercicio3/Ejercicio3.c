@@ -22,11 +22,7 @@
 #include <stdlib.h>
 #include <signal.h>
 
-
-char c;
-char msj[128];
 char fecha[64];
-int num;
 int fifo;  //FIFO
 FILE* fpOut;	
 
@@ -65,10 +61,7 @@ int main(int argc, char *argv []) {
 		exit(EXIT_FAILURE);
 	}
 
-
-    char * myfifo = argv[1];            // path del FIFO
 	int lenEtiqueta = atoi(argv[2]);  	//tamaño de la etiqueta
-	char * outDir = argv[3];            // path del directorio destino.
 
 	//** creo el demonio
 	pid_t process_id = 0;
@@ -82,58 +75,53 @@ int main(int argc, char *argv []) {
 		exit(EXIT_FAILURE);
 	} else if (process_id > 0) {
         // Si es el padre, lo mata;
+		printf("\nID del proceso: %d \n", process_id);
 		exit(EXIT_SUCCESS);
 	}
-						
-	// ignora las señales
-	printf("ID del proceso: %d \n", getpid());
+	
+	unlink(argv[1]);
+	int result = mkfifo(argv[1], 0666);
+	
+	if (result == -1){
+		printf("Error MKFIFO\n");
+		exit(EXIT_FAILURE);
+	}
+	// Abre el FIFO como solo lectura
 
-		unlink(myfifo);
-
-		// Crea el FIFO:  mkfifo(<pathname>, <permission>)
-		int result = mkfifo(myfifo, 0666);
-		// chmod (myfifo, 460);
-
-        if (result == -1){
-			printf("Error MKFIFO\n");
-			exit(EXIT_FAILURE);
-		}
-		// Abre el FIFO como solo lectura
-        fifo = open(myfifo, O_RDONLY);
-        if (!fifo){
-			printf("Error MKFIFO\n");
-			exit(EXIT_FAILURE);
-		}
-
-	char prefix[lenEtiqueta];
+	char * prefix =  malloc(lenEtiqueta);
 
     while (1) {
-       	if ( read(fifo, msj, sizeof(msj))<=0) {
-        	perror("No se pudo leer en el FIFO\n");
+
+		fifo = open(argv[1], O_RDONLY);
+    	if (!fifo){
+			printf("Error MKFIFO\n");
 			exit(EXIT_FAILURE);
-	 	} else {
+		}
+
+		char msj[1024];
+		int buffer = read(fifo, msj, sizeof(msj));
+       	if ( buffer > 0) {
+			
+			msj[buffer] = '\0';
 			// consigue la fecha y la hora
 			time_t t = time(NULL);
 			struct tm *tm = localtime(&t);  
 			strftime(fecha, sizeof(fecha), "%Y%m%d", tm);  // la formatea YYYYMMDD
-
-
-			strcpy(prefix,msj);
-
-			char * fileOutput = "";
-        	sprintf(fileOutput,"%s%s.txt", prefix, fecha);
+			strncpy(prefix, msj, lenEtiqueta);
+			char fileOutput[150];
+        	sprintf(fileOutput,"%s%s%s.txt",argv[3], prefix, fecha);
 
 	 		fpOut = fopen( fileOutput, "a");
 		    if( fpOut == NULL){
-				printf("ERROR, no se pudo abrir/crear el archivo %s\n", outDir);
+				printf("ERROR, no se pudo abrir/crear el archivo %s\n", argv[3]);
 		        exit(EXIT_FAILURE);
 			}
 			fputs( msj, fpOut);	
 			fclose(fpOut);
 		}
-    }
-        close(fifo);
-		unlink(myfifo);
 
+		close(fifo);
+
+    }
 	exit(EXIT_SUCCESS);
 }
