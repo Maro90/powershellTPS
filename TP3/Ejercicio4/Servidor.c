@@ -24,7 +24,7 @@
 #		Gonzalez, Mauro Daniel 	35368160		#
 #		Sapaya, Nicolás Martín 	38319489		#
 #												#
-#		Instancia de Entrega: Entrega			#
+#		Instancia de Entrega: 1er re Entrega	#
 #												#
 #################################################*/
 
@@ -33,6 +33,8 @@
 #define SERVICIO_PREGUNTA 2
 #define SERVICIO_TIEMPO 3
 #define SERVICIO_FIN_PREGUNTAS 4
+#define SERVICIO_FIN_REGISTRO 5
+#define SERVICIO_REGISTRANDO 6
 
 #define TIEMPO_RESPUESTA 10
 #define TIEMPO_REGISTRO 10
@@ -133,6 +135,7 @@ void mostrarGanadores();
 void mandarResultadosFinales();
 void mandarResultado(t_comunicacion_resultados comunicacion);
 void ordenarListaPorPuntaje();
+void borrarJugadores();
 //---------------------------------------------------------------------------------------------------
 
 int main(int argc, char *argv []) {
@@ -181,20 +184,23 @@ int main(int argc, char *argv []) {
 
     if(cantidadDeJugadores > 0){
         iniciarJuego();
+        mandarResultadosFinales();
+
+        determinarGanadores();
+    	mostrarGanadores();
+
     } else {
         printf("No hay jugadores\n");
         desconectar();
     }
 	
+        borrarJugadores();
 
-    mandarResultadosFinales();
 
-    determinarGanadores();
-	mostrarGanadores();
 
+    desconectar();
 
     pthread_join(threadRegistro,NULL);
-    desconectar();
 
 	close (Socket_Servidor);
     
@@ -261,7 +267,7 @@ void handlerAlarma2(int sig){
 //---------------------------------------------------------------------------------------------------
 
 int levantarServer(){
-    	struct sockaddr_in direccion;
+    struct sockaddr_in direccion;
 
 	Socket_Servidor = socket(AF_INET, SOCK_STREAM, 0);
 	if (Socket_Servidor == -1)
@@ -377,6 +383,8 @@ void * atenderComunicaciones(void *arg){
 		if (FD_ISSET(Socket_Servidor, &descriptoresLectura))
 			registrarNuevoCliente();
     }
+
+    return NULL;
 }
 //---------------------------------------------------------------------------------------------------
 
@@ -393,9 +401,19 @@ void registrarNuevoCliente(){
         else{
             printf ("\tCerrando sistema y subprocesos\n");
         }
-    } else {    
-        //TODO: PREGUNTAR SI ESTOY REGISTRANDO    
-        agregarJugadorALista(Socket_Cliente);
+    } else {
+        if (registrando){
+            agregarJugadorALista(Socket_Cliente);
+            t_comunicacion comunicacion;
+            comunicacion.servicio = SERVICIO_REGISTRANDO;
+            Escribe_Socket (Socket_Cliente, &comunicacion, sizeof(t_comunicacion));
+
+        } else{
+            t_comunicacion comunicacion;
+            comunicacion.servicio = SERVICIO_FIN_REGISTRO;
+            Escribe_Socket (Socket_Cliente, &comunicacion, sizeof(t_comunicacion));
+            close(Socket_Cliente);
+        }
 	}    
 }
 
@@ -546,12 +564,15 @@ void mandarComunicacion(t_comunicacion comunicacion, int nroPreg){
  */
 
 void desconectar (){
+    finalizo = 1;		//hago que se cierre la conexion
+    jugando = 0;
+
     pthread_cancel(threadAlarma);
     pthread_cancel(threadAlarma2);
     pthread_cancel(threadRegistro);
 
-	finalizo = 1;		//hago que se cierre la conexion
-    jugando = 0;
+
+
     close (Socket_Servidor);	//cierro el socket del servidor
 }
 
@@ -939,4 +960,15 @@ void ordenarListaPorPuntaje() {
           actual = actual->siguiente;
           siguiente = actual->siguiente;      
      }
+}
+
+//---------------------------------------------------------------------------------------------------
+void borrarJugadores(){
+    t_clientes * clientes = lista_clientes; 
+	
+    while(clientes != NULL){
+        borrarJugador(clientes->socket);
+        clientes = clientes->siguiente;
+    }
+
 }

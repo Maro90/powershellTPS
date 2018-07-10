@@ -25,7 +25,7 @@
 #		Gonzalez, Mauro Daniel 	35368160		#
 #		Sapaya, Nicolás Martín 	38319489		#
 #												#
-#		Instancia de Entrega: Entrega			#
+#		Instancia de Entrega: 1er re Entrega	#
 #												#
 #################################################*/
 
@@ -35,6 +35,8 @@
 #define SERVICIO_PREGUNTA 2
 #define SERVICIO_TIEMPO 3
 #define SERVICIO_FIN_PREGUNTAS 4
+#define SERVICIO_FIN_REGISTRO 5
+#define SERVICIO_REGISTRANDO 6
 
 //---------------------------------------------------------------------------------------------------
 
@@ -135,6 +137,14 @@ int main(int argc, char *argv []) {
 	if (connect (Socket_Con_Servidor, (struct sockaddr *)&Direccion, sizeof (Direccion)) == -1){
 		printf ("No puedo establecer conexion con el servidor\n");
 		exit (-1);
+	}
+
+	t_comunicacion comunicacion;
+	Lee_Socket(Socket_Con_Servidor, &comunicacion, sizeof(t_comunicacion));
+	if(comunicacion.servicio == SERVICIO_FIN_REGISTRO){
+		printf("Termino el período de registro, intentelo más tarde.\n");
+		close(Socket_Con_Servidor);
+		exit(EXIT_SUCCESS);
 	}
 
 	printf("Conectado con el server\n");
