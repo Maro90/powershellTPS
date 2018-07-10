@@ -12,7 +12,7 @@
 #		Gonzalez, Mauro Daniel 	35368160		#
 #		Sapaya, Nicolás Martín 	38319489		#
 #												#
-#		Instancia de Entrega: Entrega			#
+#		Instancia de Entrega: 1er re Entrega	#
 #												#
 #################################################*/
 
