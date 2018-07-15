@@ -21,6 +21,8 @@
 #include <time.h> 
 #include <stdlib.h>
 #include <signal.h>
+#include <dirent.h>
+#include <errno.h>
 
 char fecha[64];
 int fifo;  //FIFO
@@ -62,6 +64,14 @@ int main(int argc, char *argv []) {
 	}
 
 	int lenEtiqueta = atoi(argv[2]);  	//tamaño de la etiqueta
+
+	DIR *dirp;
+ 	if( (dirp= opendir( argv[3] ) )==NULL ) {
+  		printf("\nNo se pudo abrir \"%s\"\n", argv[3] );
+  		printf("Verifique que sea un directorio válido.\n");
+  		exit(1);
+ 	}
+	closedir(dirp);
 
 	//** creo el demonio
 	pid_t process_id = 0;
@@ -109,7 +119,13 @@ int main(int argc, char *argv []) {
 			strftime(fecha, sizeof(fecha), "%Y%m%d", tm);  // la formatea YYYYMMDD
 			strncpy(prefix, msj, lenEtiqueta);
 			char fileOutput[150];
-        	sprintf(fileOutput,"%s%s%s.txt",argv[3], prefix, fecha);
+
+			int pathLenght = strlen(argv[3]) - 1;
+  			if( argv[3][ pathLenght ] == '/') {
+				sprintf(fileOutput,"%s%s%s.txt",argv[3], prefix, fecha);	
+			} else {
+        		sprintf(fileOutput,"%s/%s%s.txt",argv[3], prefix, fecha);
+			}
 
 	 		fpOut = fopen( fileOutput, "a");
 		    if( fpOut == NULL){
