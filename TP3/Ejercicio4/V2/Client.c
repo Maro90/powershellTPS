@@ -13,7 +13,14 @@ void acceptController(tMessageAccept msg, tConnection * connection){
 }
 
 void questionController(tMessageQuestion msg, tConnection * connection){
-   printf("--> %s\n",msg.title);
+   printf("--> %s\n",msg.title); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
+
+
+   tCommand cmd;
+   cmd.commandId = COMMAND_ANSWER;
+   tMessageAnswer msg_ans;
+   msg_ans.id = 3; // aca deberia completar el user con scanf
+   send_command(&cmd,&msg_ans,connection);
 }
 
 void quitController(tMessageQuit msg, tConnection * connection){
@@ -57,6 +64,7 @@ int main(int argc, char *argv[]) {
 
    printf("Ingrese usuario:");
    fgets(messageInput, 100, stdin);
+   messageInput[strlen(messageInput) - 1]='\0';
    //validar user
 
    tConnection connection;

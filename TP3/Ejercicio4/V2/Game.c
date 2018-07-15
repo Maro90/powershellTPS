@@ -2,19 +2,24 @@
 
 int gameStatus = GAME_STATUS_WAITING;
 pthread_mutex_t answer_lock;
+
 int answered = 0;
 int respuesCorrecta=3;
 
-void answerControlle(tMessageAnswer msg, tConnection * connection){
+void answerController(tMessageAnswer msg, tConnection * connection){
    tUserNode * tmpUser = getUser(connection->id);
    	pthread_mutex_lock(&answer_lock);
    	if(!answered){
 	   	tmpUser->statistics.count++;
 	   	if(msg.id == respuesCorrecta){
+	   		printf("El usuario %s respondio correctamente primero \n", tmpUser->user.name );
 	   		tmpUser->statistics.correct++;
 	   	}else{
+	   		printf("El usuario %s respondio incorrectamente primero \n", tmpUser->user.name );
 	   		tmpUser->statistics.incorrect++;
 	   	}
+	}else{
+	   	printf("El usuario %s respondio tarde \n", tmpUser->user.name );	
 	}
 	answered++;
 	pthread_mutex_unlock(&answer_lock);
@@ -25,6 +30,7 @@ void newUser(int socket){
     tUserNode * tmpUser;
     connection.initController = initController;
     connection.acceptController = NULL;
+    connection.answerController = answerController;
 
     connection.descriptor = socket;
     tmpUser = addUser(connection);
@@ -59,4 +65,8 @@ void startGame(){
 	printf("Juego iniciado\n");
 	gameStatus = GAME_STATUS_PAYING;
 	sendQuestion();
+}
+
+void endGame(){
+	freeUserList();
 }

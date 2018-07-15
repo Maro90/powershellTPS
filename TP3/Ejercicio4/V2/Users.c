@@ -35,6 +35,7 @@ tUserNode * addUser(tConnection connection){
 void freeUserList(){
     tUserNode * tmpUser;
     while(userList){
+    	close(userList->connection.descriptor);
         tmpUser = userList;
         userList = userList->prev;
         free(tmpUser);
