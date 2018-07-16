@@ -4,7 +4,6 @@ tQuestion * getQuestions(){ return questions;}
 
 void loadQuestions() {
     int count = 0;
-    int ans = -1;
     int ansPos = 0;
     FILE * fp;
     char * line = NULL;
@@ -29,11 +28,11 @@ void loadQuestions() {
 	        	}
 	        	lastQ = tmpQ;
         	}
-            ans = -1;
             ansPos = 0;
             count++;
             tmpQ = (tQuestion *)malloc(sizeof(tQuestion));
             tmpQ->next=NULL;
+            tmpQ->questionMsg.ans = -1;
             if(tmpQ== NULL){
             	printf("Archivo de preguntas muy grande, memoria insuficiente\n");
         		exit(1);
@@ -41,7 +40,7 @@ void loadQuestions() {
             strcpy(tmpQ->questionMsg.title,line+2);
         } else if ( type == 'R' ) {
         	if(line[1]=='C'){
-        		if(ans!=-1){
+        		if(tmpQ->questionMsg.ans!=-1){
 	        		printf("Archivo de preguntas invalido, una pregunta tiene mas de una respuesta\n");
 	        		exit(1);	
 	        	}
