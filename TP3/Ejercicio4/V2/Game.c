@@ -6,6 +6,8 @@ pthread_mutex_t answer_lock;
 tMessageQuestion actualQuestion;
 int answered = 0;
 int gameActivesUsers;
+// pthread_t   threadAlarmQuestion;
+// int tiempoParaResponder = 0;
 
 void answerController(tMessageAnswer msg, tConnection * connection){
    tUserNode * tmpUser = getUser(connection->id);
@@ -59,9 +61,13 @@ void sendQuestion(tQuestion * question){
 	cmd.commandId = COMMAND_QUESTION;
 	
 	send_all(&cmd,&question->questionMsg);
+	// tiempoParaResponder = 10;
+	// pthread_create(&threadAlarmQuestion, NULL, questionAlarm, 0);
+
 	while(gameActivesUsers != answered){
 		usleep(100);
 	}
+	// pthread_join(threadAlarmQuestion);
 	printf("Todos los usuarios respondieron\n");
 }
 
@@ -84,4 +90,20 @@ void startGame(){
 
 void endGame(){
 	freeUserList();
-}
+}}
+
+// void * questionAlarm(void *arg){
+// 	signal(SIGALRM, handlerQuestionAlarm);
+// 	while(gameActivesUsers != answered){
+// 		alarm(1); 
+// 		sleep(1); 
+// 	}
+// }
+
+// void handlerQuestionAlarm(int sig){
+//     if (tiempoParaResponder  == 0){
+//         pthread_cancel(threadAlarmQuestion);
+//     } else {
+//         tiempoParaResponder--;
+//     }
+// }
