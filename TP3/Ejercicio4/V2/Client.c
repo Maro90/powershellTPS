@@ -1,24 +1,21 @@
 #include "Protocol.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
 
 #include <string.h>
 
-void acceptController(tMessageAccept msg, tConnection * connection){
-   connection->id = msg.id;
-   printf("%s\n",msg.message);
-}
+pthread_t   threadResponder;
 
-void questionController(tMessageQuestion msg, tConnection * connection){    	    
+void * mostrarPregunta(tMessageQuestion * msg){
     printf("\n---------------------------------------------------------------------\n");
-	printf("%s\n",msg.title);
-
+	printf("%s\n",msg->title);
 
     for(int i=0; i<4; i++){
-        printf("RTA %d: %s\n", i+1, msg.answers[i]);
+        printf("RTA %d: %s\n", i+1, msg->answers[i]);
     }
     int respuesta;
     int ch;
@@ -31,16 +28,43 @@ void questionController(tMessageQuestion msg, tConnection * connection){
         while ((ch = getchar()) != EOF && ch != '\n');
     }while (!ok || respuesta < 1 || respuesta > 4);
 
-   tCommand cmd;
-   cmd.commandId = COMMAND_ANSWER;
-   tMessageAnswer msg_ans;
-   msg_ans.id = (respuesta - 1);
-   send_command(&cmd,&msg_ans,connection);
+    respuesta = respuesta - 1; //La transformamos en el id
+    pthread_exit((void*)respuesta);
+}
+
+void acceptController(tMessageAccept msg, tConnection * connection){
+   connection->id = msg.id;
+   printf("%s\n",msg.message);
+}
+
+void questionController(tMessageQuestion msg, tConnection * connection){
+    int respuesta = -1;
+    void *res;    
+    pthread_create(&threadResponder, NULL, (void*)mostrarPregunta, (void*)&msg);
+
+	pthread_join(threadResponder, &res);
+
+    if( res == PTHREAD_CANCELED){
+        printf("Tiempo agotado\n");
+    } else {
+        respuesta = res;
+    }
+
+    tCommand cmd;
+    cmd.commandId = COMMAND_ANSWER;
+    tMessageAnswer msg_ans;
+    msg_ans.id = respuesta;
+    send_command(&cmd,&msg_ans,connection);
 }
 
 void quitController(tMessageQuit msg, tConnection * connection){
    printf("%s \n",msg.message);
    exit(0);
+}
+
+void statisticsController(tMessageQuit msg, tConnection * connection){
+   printf("%s\n",msg.message);
+
 }
 
 int main(int argc, char *argv[]) {
