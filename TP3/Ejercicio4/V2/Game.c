@@ -3,8 +3,8 @@
 int gameStatus = GAME_STATUS_WAITING;
 pthread_mutex_t answer_lock;
 
+tMessageQuestion actualQuestion;
 int answered = 0;
-int respuesCorrecta=3;
 int gameActivesUsers;
 
 void answerController(tMessageAnswer msg, tConnection * connection){
@@ -12,7 +12,7 @@ void answerController(tMessageAnswer msg, tConnection * connection){
    	pthread_mutex_lock(&answer_lock);
    	if(!answered){
 	   	tmpUser->statistics.count++;
-	   	if(msg.id == respuesCorrecta){
+	   	if(msg.id == actualQuestion.ans){
 	   		printf("El usuario %s respondio correctamente primero \n", tmpUser->user.name );
 	   		tmpUser->statistics.correct++;
 	   	}else{
@@ -75,6 +75,7 @@ void startGame(){
 	gameStatus = GAME_STATUS_PAYING;
 	tQuestion * questions = getQuestions();
 	while(questions){
+		actualQuestion = questions->questionMsg;
 		sendQuestion(questions);
 		questions=questions->next;
 	}
