@@ -65,6 +65,8 @@ void quitController(tMessageQuit msg, tConnection * connection){
 void statisticsController(tMessageQuit msg, tConnection * connection){
    printf("%s\n",msg.message);
 
+   pthread_cancel(threadResponder);
+
 }
 
 int main(int argc, char *argv[]) {
