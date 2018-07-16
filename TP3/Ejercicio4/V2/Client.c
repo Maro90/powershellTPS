@@ -34,7 +34,7 @@ void questionController(tMessageQuestion msg, tConnection * connection){
    tCommand cmd;
    cmd.commandId = COMMAND_ANSWER;
    tMessageAnswer msg_ans;
-   msg_ans.id = respuesta;
+   msg_ans.id = (respuesta - 1);
    send_command(&cmd,&msg_ans,connection);
 }
 
