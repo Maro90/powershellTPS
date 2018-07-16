@@ -12,19 +12,29 @@ void acceptController(tMessageAccept msg, tConnection * connection){
    printf("%s\n",msg.message);
 }
 
-void questionController(tMessageQuestion msg, tConnection * connection){
-   printf("--> %s\n",msg.title); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
-   printf("--> %s\n",msg.answers[0]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
-   printf("--> %s\n",msg.answers[1]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
-   printf("--> %s\n",msg.answers[2]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
-   printf("--> %s\n",msg.answers[3]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
-   
+void questionController(tMessageQuestion msg, tConnection * connection){    	    
+    printf("\n---------------------------------------------------------------------\n");
+	printf("%s\n",msg.title);
 
+
+    for(int i=0; i<4; i++){
+        printf("RTA %d: %s\n", i+1, msg.answers[i]);
+    }
+    int respuesta;
+    int ch;
+    int ok;
+    do{
+        printf("Elija su respuesta: ");
+        fflush(stdout);
+        ok = scanf("%d", &respuesta);   
+        /* Descartamos el resto de la linea */
+        while ((ch = getchar()) != EOF && ch != '\n');
+    }while (!ok || respuesta < 1 || respuesta > 4);
 
    tCommand cmd;
    cmd.commandId = COMMAND_ANSWER;
    tMessageAnswer msg_ans;
-   msg_ans.id = 3; // aca deberia completar el user con scanf
+   msg_ans.id = respuesta;
    send_command(&cmd,&msg_ans,connection);
 }
 
