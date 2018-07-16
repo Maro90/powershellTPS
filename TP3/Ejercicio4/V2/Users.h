@@ -48,4 +48,6 @@ void acceptController(tMessageAccept, tConnection * );
 
 int getUserCount();
 
+int getUserActivesCount();
+
 #endif

@@ -5,6 +5,7 @@ pthread_mutex_t answer_lock;
 
 int answered = 0;
 int respuesCorrecta=3;
+int gameActivesUsers;
 
 void answerController(tMessageAnswer msg, tConnection * connection){
    tUserNode * tmpUser = getUser(connection->id);
@@ -42,18 +43,26 @@ void newUser(int socket){
         tmpUser->status=USER_STATUS_CONNECTIONERROR;
     }
 
-    if(getUserCount() == 2){
+    if(getUserActivesCount() == 2){
     	startGame();
     }
 }
 
-void sendQuestion(){
+void configGame(){
+	loadQuestions();
+}
+
+void sendQuestion(tQuestion * question){
+	answered=0;
+	gameActivesUsers = getUserActivesCount();
 	tCommand cmd;
 	cmd.commandId = COMMAND_QUESTION;
-	tMessageQuestion msg;
-	strcpy(msg.title,"PREGUNTA!");
-	answered=0;
-	send_all(&cmd,&msg);
+	
+	send_all(&cmd,&question->questionMsg);
+	while(gameActivesUsers != answered){
+		usleep(100);
+	}
+	printf("Todos los usuarios respondieron\n");
 }
 
 void startGame(){
@@ -64,7 +73,12 @@ void startGame(){
     }
 	printf("Juego iniciado\n");
 	gameStatus = GAME_STATUS_PAYING;
-	sendQuestion();
+	tQuestion * questions = getQuestions();
+	while(questions){
+		sendQuestion(questions);
+		questions=questions->next;
+	}
+	printf("Fin del juego\n");
 }
 
 void endGame(){

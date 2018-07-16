@@ -14,6 +14,11 @@ void acceptController(tMessageAccept msg, tConnection * connection){
 
 void questionController(tMessageQuestion msg, tConnection * connection){
    printf("--> %s\n",msg.title); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
+   printf("--> %s\n",msg.answers[0]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
+   printf("--> %s\n",msg.answers[1]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
+   printf("--> %s\n",msg.answers[2]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
+   printf("--> %s\n",msg.answers[3]); //deberia mostrar la pregunta y las posibles respuestas (ver struct tMessageQuestion en protocol )
+   
 
 
    tCommand cmd;

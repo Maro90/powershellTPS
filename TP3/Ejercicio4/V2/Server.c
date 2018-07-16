@@ -44,6 +44,7 @@ int main(int argc , char *argv[])
     printf("Esperando conexiones...\n");
     c = sizeof(struct sockaddr_in);
 	
+    configGame();
 
     while( socket_desc ){
         client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c);

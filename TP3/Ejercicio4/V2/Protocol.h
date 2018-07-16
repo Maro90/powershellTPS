@@ -38,7 +38,8 @@ typedef struct messageQuit{
 
 typedef struct messageQuestion{
 	char title[100];
-	char responses[4][100];
+	char answers[4][100];
+	int ans;
 }tMessageQuestion;
 
 typedef struct messageAnswer{

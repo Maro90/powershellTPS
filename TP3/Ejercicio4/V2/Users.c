@@ -1,7 +1,7 @@
 #include "Users.h"
 
 int userCount = 0;
-
+int activesUsers = 0;
 tUserNode * userList = NULL;
 
 tUserNode * getUser(int connectionId){
@@ -26,6 +26,7 @@ tUserNode * addUser(tConnection connection){
         tmpUser->prev = NULL;
     }
     userCount++;
+    activesUsers++;
     tmpUser->connection.id=userCount;
     tmpUser->status=1;
     userList = tmpUser;
@@ -43,6 +44,7 @@ void freeUserList(){
 }
 
 void userQuit(int connectionId, int status){
+	activesUsers--;
     tUserNode * tmpUser;
     tmpUser = getUser(connectionId);
     printf("Usuario desconectado id: %d nombre: %s \n",connectionId,tmpUser->user.name );
@@ -89,3 +91,4 @@ int send_all(tCommand * cmd,void * data){
 
 
 int getUserCount(){ return userCount;}
+int getUserActivesCount(){ return activesUsers;}

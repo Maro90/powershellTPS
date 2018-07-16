@@ -8,9 +8,11 @@
 
 #include "Protocol.h"
 #include "Users.h"
+#include "Questions.h"
 
 
 void newUser(int);
+void configGame();
 void startGame();
 void endGame();
 
